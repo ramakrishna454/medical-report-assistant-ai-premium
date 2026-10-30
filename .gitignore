@@ -1,0 +1,8 @@
+
+.streamlit/secrets.toml
+medical_report_history.db
+*.db
+__pycache__/
+.venv/
+venv/
+.env
