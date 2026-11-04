@@ -1055,91 +1055,6 @@ def render_ai_analysis(raw_output, was_truncated=False):
 
     return data
 
-
-def render_report_comparison_section():
-    st.subheader("Old vs New Report Comparison")
-    st.caption("Compare an older report with a newer one. The comparison section is shown at the top of the report page.")
-    compare_force_ocr = st.checkbox("Run OCR on every PDF page", value=False, key="compare_force_ocr")
-    with st.expander("Compare two reports (older vs newer)", expanded=True):
-        st.write("Compare report changes using AI. The extracted text from both reports is sent to the configured OpenAI API only after you select consent and click the comparison button.")
-        older_file = st.file_uploader("Older report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="older_compare_upload")
-        newer_file = st.file_uploader("Newer report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="newer_compare_upload")
-        compare_consent = st.checkbox("I consent to send the extracted text of both reports to OpenAI for comparison and am authorized to share them.", key="compare_consent")
-        if st.button("Compare reports with AI", disabled=not (older_file and newer_file and compare_consent and model_name.strip()), key="compare_reports_button"):
-            try:
-                with st.spinner("Extracting and comparing both reports..."):
-                    old_text = extract_uploaded_text(older_file, force_ocr=compare_force_ocr)
-                    new_text = extract_uploaded_text(newer_file, force_ocr=compare_force_ocr)
-                    compare_output, compare_truncated = compare_reports_with_ai(old_text, new_text, model_name.strip(), language_name)
-                st.session_state["medical_report_compare_output"] = compare_output
-                st.session_state["medical_report_compare_truncated"] = compare_truncated
-                st.session_state["medical_report_compare_names"] = (older_file.name, newer_file.name)
-                st.session_state["medical_report_compare_hash"] = hashlib.sha256((old_text + "\0" + new_text).encode("utf-8", errors="replace")).hexdigest()
-                st.session_state["medical_report_compare_old_text"] = old_text
-                st.session_state["medical_report_compare_new_text"] = new_text
-            except Exception as exc:
-                st.error("Report comparison could not be completed.")
-                st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-        compare_output = st.session_state.get("medical_report_compare_output", "")
-        if compare_output:
-            if st.session_state.get("medical_report_compare_truncated"):
-                st.warning("One or both reports were truncated before comparison; later content may be missing.")
-            try:
-                comparison = json.loads(compare_output)
-                st.markdown("#### Comparison summary")
-                st.write(comparison.get("overall_summary", "No summary returned."))
-                result_rows = comparison.get("results_comparison") or []
-                if result_rows:
-                    st.markdown("#### Results compared")
-                    st.dataframe([{
-                        "Parameter": x.get("parameter", ""),
-                        "Older value": str(x.get("older_value", "Not stated")) + (" " + str(x.get("older_unit", "")) if x.get("older_unit") else ""),
-                        "Newer value": str(x.get("newer_value", "Not stated")) + (" " + str(x.get("newer_unit", "")) if x.get("newer_unit") else ""),
-                        "Older reference range": x.get("older_reference_range", "Not stated"),
-                        "Newer reference range": x.get("newer_reference_range", "Not stated"),
-                        "Change described by AI": x.get("change_description", ""),
-                        "Older source quote": x.get("older_source_quote", ""),
-                        "Newer source quote": x.get("newer_source_quote", ""),
-                    } for x in result_rows if isinstance(x, dict)], use_container_width=True, hide_index=True)
-                    chart_rows = []
-                    for x in result_rows:
-                        if not isinstance(x, dict):
-                            continue
-                        vals=[]
-                        for key in ("older_value", "newer_value"):
-                            m=re.search(r"[-+]?\d[\d,]*(?:\.\d+)?", str(x.get(key, "")))
-                            vals.append(float(m.group(0).replace(",", "")) if m else None)
-                        if vals[0] is not None and vals[1] is not None and x.get("parameter"):
-                            chart_rows.append({"Parameter": str(x["parameter"]), "Older report": vals[0], "Newer report": vals[1]})
-                    if chart_rows:
-                        st.markdown("#### Numeric change overview (units may differ; verify before interpreting)")
-                        import pandas as pd
-                        chart_data = pd.DataFrame(
-                            {row["Parameter"]: [row["Older report"], row["Newer report"]] for row in chart_rows},
-                            index=["Older report", "Newer report"],
-                        )
-                        st.line_chart(chart_data)
-                        st.caption("The chart compares numeric values only. Confirm that both tests use matching units and methods before interpreting changes.")
-                finding_rows = comparison.get("findings_comparison") or []
-                if finding_rows:
-                    st.markdown("#### Narrative findings compared")
-                    for item in finding_rows:
-                        if isinstance(item, dict):
-                            st.markdown(f"**{item.get('topic', 'Finding')}**")
-                            st.write("Older: " + str(item.get("older_finding", "Not stated")))
-                            st.caption("Older source: “" + str(item.get("older_source_quote", "")) + "”")
-                            st.write("Newer: " + str(item.get("newer_finding", "Not stated")))
-                            st.caption("Newer source: “" + str(item.get("newer_source_quote", "")) + "”")
-                            st.write(item.get("change_description", ""))
-                if comparison.get("limitations"):
-                    st.markdown("#### Limitations")
-                    for item in comparison["limitations"]:
-                        st.write("• " + str(item))
-                st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
-            except (json.JSONDecodeError, TypeError):
-                st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
-                st.text(compare_output)
-
 with st.sidebar:
     st.header("Report reading")
     st.markdown(
@@ -1165,7 +1080,7 @@ with st.sidebar:
     st.subheader("Navigation")
     selected_page = st.radio(
         "Choose a section",
-        ["Home", "Upload & OCR", "Report History"],
+        ["Home", "Upload & OCR", "Old vs New Comparison", "Report History"],
         key="main_navigation",
         label_visibility="collapsed",
     )
@@ -1174,13 +1089,11 @@ if selected_page == "Home":
     st.title("Welcome to your Medical Report Assistant")
     st.write("Upload a medical report, review extracted text, understand the AI explanation, or compare reports over time.")
     st.markdown("### Choose where to begin")
-    st.markdown("- **Upload & OCR:** Read a PDF or scanned report and review extracted text and analysis.\n- **Report History:** View or delete analyses saved on this computer.")
+    st.markdown("- **Upload & OCR:** Read a PDF or scanned report and review extracted text and analysis.\n- **Old vs New Comparison:** Compare two reports and review changes.\n- **Report History:** View or delete analyses saved on this computer.")
     st.info("Educational support only. This app does not diagnose or prescribe treatment. Verify all extracted information against the original report.")
 elif selected_page == "Upload & OCR":
     st.title("Upload & OCR")
     st.caption("Upload a medical report, extract its text, and review the AI explanation.")
-    render_report_comparison_section()
-    st.divider()
     force_ocr = st.checkbox(
         "Run OCR on every PDF page even if text is available (slower; useful for mixed or poor-quality PDFs)",
         value=False,
@@ -1348,6 +1261,90 @@ elif selected_page == "Upload & OCR":
             "- Avoid uploading reports unless you are comfortable sending extracted text to the configured AI provider."
         )
 
+
+elif selected_page == "Old vs New Comparison":
+    st.title("Old vs New Report Comparison")
+    st.caption("Upload an older and a newer report to review changes side by side.")
+    compare_force_ocr = st.checkbox("Run OCR on every PDF page", value=False, key="compare_force_ocr")
+    with st.expander("Compare two reports (older vs newer)", expanded=False):
+        st.write("Compare report changes using AI. The extracted text from both reports is sent to the configured OpenAI API only after you select consent and click the comparison button.")
+        older_file = st.file_uploader("Older report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="older_compare_upload")
+        newer_file = st.file_uploader("Newer report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="newer_compare_upload")
+        compare_consent = st.checkbox("I consent to send the extracted text of both reports to OpenAI for comparison and am authorized to share them.", key="compare_consent")
+        if st.button("Compare reports with AI", disabled=not (older_file and newer_file and compare_consent and model_name.strip()), key="compare_reports_button"):
+            try:
+                with st.spinner("Extracting and comparing both reports..."):
+                    old_text = extract_uploaded_text(older_file, force_ocr=compare_force_ocr)
+                    new_text = extract_uploaded_text(newer_file, force_ocr=compare_force_ocr)
+                    compare_output, compare_truncated = compare_reports_with_ai(old_text, new_text, model_name.strip(), language_name)
+                st.session_state["medical_report_compare_output"] = compare_output
+                st.session_state["medical_report_compare_truncated"] = compare_truncated
+                st.session_state["medical_report_compare_names"] = (older_file.name, newer_file.name)
+                st.session_state["medical_report_compare_hash"] = hashlib.sha256((old_text + "\0" + new_text).encode("utf-8", errors="replace")).hexdigest()
+                st.session_state["medical_report_compare_old_text"] = old_text
+                st.session_state["medical_report_compare_new_text"] = new_text
+            except Exception as exc:
+                st.error("Report comparison could not be completed.")
+                st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+        compare_output = st.session_state.get("medical_report_compare_output", "")
+        if compare_output:
+            if st.session_state.get("medical_report_compare_truncated"):
+                st.warning("One or both reports were truncated before comparison; later content may be missing.")
+            try:
+                comparison = json.loads(compare_output)
+                st.markdown("#### Comparison summary")
+                st.write(comparison.get("overall_summary", "No summary returned."))
+                result_rows = comparison.get("results_comparison") or []
+                if result_rows:
+                    st.markdown("#### Results compared")
+                    st.dataframe([{
+                        "Parameter": x.get("parameter", ""),
+                        "Older value": str(x.get("older_value", "Not stated")) + (" " + str(x.get("older_unit", "")) if x.get("older_unit") else ""),
+                        "Newer value": str(x.get("newer_value", "Not stated")) + (" " + str(x.get("newer_unit", "")) if x.get("newer_unit") else ""),
+                        "Older reference range": x.get("older_reference_range", "Not stated"),
+                        "Newer reference range": x.get("newer_reference_range", "Not stated"),
+                        "Change described by AI": x.get("change_description", ""),
+                        "Older source quote": x.get("older_source_quote", ""),
+                        "Newer source quote": x.get("newer_source_quote", ""),
+                    } for x in result_rows if isinstance(x, dict)], use_container_width=True, hide_index=True)
+                    chart_rows = []
+                    for x in result_rows:
+                        if not isinstance(x, dict):
+                            continue
+                        vals=[]
+                        for key in ("older_value", "newer_value"):
+                            m=re.search(r"[-+]?\d[\d,]*(?:\.\d+)?", str(x.get(key, "")))
+                            vals.append(float(m.group(0).replace(",", "")) if m else None)
+                        if vals[0] is not None and vals[1] is not None and x.get("parameter"):
+                            chart_rows.append({"Parameter": str(x["parameter"]), "Older report": vals[0], "Newer report": vals[1]})
+                    if chart_rows:
+                        st.markdown("#### Numeric change overview (units may differ; verify before interpreting)")
+                        import pandas as pd
+                        chart_data = pd.DataFrame(
+                            {row["Parameter"]: [row["Older report"], row["Newer report"]] for row in chart_rows},
+                            index=["Older report", "Newer report"],
+                        )
+                        st.line_chart(chart_data)
+                        st.caption("The chart compares numeric values only. Confirm that both tests use matching units and methods before interpreting changes.")
+                finding_rows = comparison.get("findings_comparison") or []
+                if finding_rows:
+                    st.markdown("#### Narrative findings compared")
+                    for item in finding_rows:
+                        if isinstance(item, dict):
+                            st.markdown(f"**{item.get('topic', 'Finding')}**")
+                            st.write("Older: " + str(item.get("older_finding", "Not stated")))
+                            st.caption("Older source: “" + str(item.get("older_source_quote", "")) + "”")
+                            st.write("Newer: " + str(item.get("newer_finding", "Not stated")))
+                            st.caption("Newer source: “" + str(item.get("newer_source_quote", "")) + "”")
+                            st.write(item.get("change_description", ""))
+                if comparison.get("limitations"):
+                    st.markdown("#### Limitations")
+                    for item in comparison["limitations"]:
+                        st.write("• " + str(item))
+                st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
+            except (json.JSONDecodeError, TypeError):
+                st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
+                st.text(compare_output)
 
 elif selected_page == "Report History":
     st.title("Report History")
