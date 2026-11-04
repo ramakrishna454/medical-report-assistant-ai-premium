@@ -54,7 +54,7 @@ with st.sidebar:
     st.subheader("Navigation")
     selected_page = st.radio(
         "Choose a section",
-        ["Home", "Upload & OCR", "Report History"],
+        ["Home", "Upload & OCR", "Old vs New Comparison", "Report History"],
         key="main_navigation",
         label_visibility="collapsed",
     )
@@ -1175,12 +1175,11 @@ if selected_page == "Home":
     st.title("Welcome to your Medical Report Assistant")
     st.write("Upload a medical report, review extracted text, understand the AI explanation, or compare reports over time.")
     st.markdown("### Choose where to begin")
-    st.markdown("- **Upload & OCR:** Read a PDF or scanned report and review extracted text and analysis.\n- **Report History:** View or delete analyses saved on this computer.")
+    st.markdown("- **Upload & OCR:** Read a PDF or scanned report and review extracted text and analysis.\n- **Old vs New Comparison:** Compare two reports over time.\n- **Report History:** View or delete analyses saved on this computer.")
     st.info("Educational support only. This app does not diagnose or prescribe treatment. Verify all extracted information against the original report.")
 elif selected_page == "Upload & OCR":
     st.title("Upload & OCR")
     st.caption("Upload a medical report, extract its text, and review the AI explanation.")
-    render_report_comparison_section()
     st.divider()
     force_ocr = st.checkbox(
         "Run OCR on every PDF page even if text is available (slower; useful for mixed or poor-quality PDFs)",
@@ -1350,6 +1349,10 @@ elif selected_page == "Upload & OCR":
         )
 
 
+elif selected_page == "Old vs New Comparison":
+    st.title("Old vs New Report Comparison")
+    st.caption("Compare an older medical report with a newer one.")
+    render_report_comparison_section()
 elif selected_page == "Report History":
     st.title("Report History")
     st.caption("Saved analyses are stored locally on this computer.")
