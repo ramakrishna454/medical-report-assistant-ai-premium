@@ -17,35 +17,78 @@ st.set_page_config(page_title="AI Medical Report Assistant", page_icon="🩺", l
 # Premium visual refresh: layout and component styling only; app logic remains unchanged.
 st.markdown("""
 <style>
-:root { --mr-ink:#172033; --mr-muted:#475569; --mr-teal:#0f766e; --mr-line:#cbd5e1; }
-/* High-contrast, calm light theme: avoid translucent text and gradient overlays. */
-[data-testid="stAppViewContainer"], [data-testid="stMain"] { background:#f8fafc !important; color:#172033 !important; }
-[data-testid="stHeader"] { background:#f8fafc !important; }
-.block-container { max-width:1400px; padding-top:1.5rem; padding-bottom:3rem; }
-h1,h2,h3,h4,h5,h6 { color:#172033 !important; font-weight:750 !important; }
-p,li,label,span,small,strong, [data-testid="stMarkdownContainer"],
-[data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li,
-[data-testid="stText"], [data-testid="stCaptionContainer"] { color:#263548 !important; opacity:1 !important; }
-[data-testid="stCaptionContainer"] p { color:#475569 !important; }
-[data-testid="stExpander"] summary, [data-testid="stExpander"] summary p { color:#172033 !important; }
-[data-baseweb="input"] input, [data-baseweb="textarea"] textarea,
-[data-baseweb="select"] input, [data-baseweb="select"] [role="combobox"] {
- color:#172033 !important; -webkit-text-fill-color:#172033 !important; background:#fff !important;
+:root {
+  --mr-ink:#172033; --mr-muted:#536277; --mr-teal:#0f766e;
+  --mr-teal-dark:#115e59; --mr-line:#dbe4ee; --mr-surface:#ffffff;
+  --mr-bg:#f4f7fb; --mr-soft:#eaf5f4;
 }
-[data-testid="stFileUploader"] *, [data-testid="stAlert"] * { color:#263548 !important; opacity:1 !important; }
-[data-testid="stFileUploader"], [data-testid="stVerticalBlockBorderWrapper"],
-div[data-testid="stExpander"], [data-testid="stAlert"] { border-radius:14px; }
-[data-testid="stFileUploader"] { background:#fff !important; border:1px dashed #94a3b8 !important; padding:1rem; }
-[data-testid="stVerticalBlockBorderWrapper"] { background:#fff !important; border:1px solid #d7e0ea !important; box-shadow:0 3px 12px rgba(15,23,42,.035); }
-div[data-testid="stMetric"] { background:#fff !important; border:1px solid #d7e0ea; border-radius:12px; padding:14px; }
-div[data-testid="stMetricLabel"], div[data-testid="stMetricValue"] { color:#172033 !important; }
-.stButton > button, .stDownloadButton > button { color:#172033 !important; background:#fff !important; border:1px solid #94a3b8 !important; border-radius:10px; font-weight:650; min-height:2.6rem; }
-.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] { color:#fff !important; background:#0f766e !important; border:1px solid #0f766e !important; }
-.stButton > button:hover, .stDownloadButton > button:hover { border-color:#0f766e !important; }
-[data-testid="stTabs"] button { color:#263548 !important; }
-[data-testid="stSidebar"] { background:#f1f5f9 !important; border-right:1px solid #d7e0ea; }
-[data-testid="stSidebar"] * { color:#172033 !important; opacity:1 !important; }
-hr { border-color:#d7e0ea !important; }
+html, body, [data-testid="stAppViewContainer"] { background:var(--mr-bg) !important; }
+[data-testid="stMain"] { background:transparent !important; color:var(--mr-ink) !important; }
+[data-testid="stHeader"] { background:rgba(244,247,251,.92) !important; }
+.block-container { max-width:1440px; padding-top:1.7rem; padding-bottom:3.5rem; }
+/* Consistent, readable typography */
+h1,h2,h3,h4,h5,h6 { color:var(--mr-ink) !important; font-weight:750 !important; letter-spacing:-.025em; }
+h1 { font-size:2.25rem !important; line-height:1.2 !important; }
+h2 { font-size:1.55rem !important; margin-top:1.25rem !important; }
+h3 { font-size:1.2rem !important; }
+p,li,label,span,small,strong,[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,[data-testid="stMarkdownContainer"] li,
+[data-testid="stText"],[data-testid="stCaptionContainer"] { color:#263548 !important; opacity:1 !important; }
+[data-testid="stCaptionContainer"] p { color:var(--mr-muted) !important; }
+/* Sidebar and navigation */
+[data-testid="stSidebar"] { background:#eef3f8 !important; border-right:1px solid var(--mr-line); }
+[data-testid="stSidebar"] > div:first-child { padding-top:1rem; }
+[data-testid="stSidebar"] * { color:var(--mr-ink) !important; opacity:1 !important; }
+[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 { font-size:1.08rem !important; letter-spacing:-.01em; }
+[data-testid="stSidebar"] [role="radiogroup"] { gap:.35rem; }
+[data-testid="stSidebar"] [role="radiogroup"] label {
+  background:rgba(255,255,255,.78); border:1px solid #dce5ee; border-radius:11px;
+  padding:.58rem .72rem; transition:all .16s ease; width:100%;
+}
+[data-testid="stSidebar"] [role="radiogroup"] label:hover { border-color:#8cc9c3; background:#fff; }
+/* Inputs */
+[data-baseweb="input"] input,[data-baseweb="textarea"] textarea,
+[data-baseweb="select"] input,[data-baseweb="select"] [role="combobox"] {
+ color:var(--mr-ink) !important; -webkit-text-fill-color:var(--mr-ink) !important;
+ background:#fff !important; border-radius:9px !important;
+}
+[data-baseweb="input"] > div,[data-baseweb="textarea"] > div,
+[data-baseweb="select"] > div { border-color:#cbd7e3 !important; border-radius:10px !important; }
+[data-baseweb="input"] > div:focus-within,[data-baseweb="textarea"] > div:focus-within,
+[data-baseweb="select"] > div:focus-within { border-color:var(--mr-teal) !important; box-shadow:0 0 0 2px rgba(15,118,110,.12) !important; }
+/* Buttons */
+.stButton > button,.stDownloadButton > button {
+ color:var(--mr-ink) !important; background:#fff !important; border:1px solid #cbd7e3 !important;
+ border-radius:10px !important; font-weight:650 !important; min-height:2.65rem;
+ transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.stButton > button[kind="primary"],.stDownloadButton > button[kind="primary"] {
+ color:#fff !important; background:var(--mr-teal) !important; border:1px solid var(--mr-teal) !important;
+}
+.stButton > button:hover,.stDownloadButton > button:hover {
+ border-color:var(--mr-teal) !important; box-shadow:0 4px 12px rgba(15,118,110,.12); transform:translateY(-1px);
+}
+.stButton > button[kind="primary"]:hover,.stDownloadButton > button[kind="primary"]:hover { background:var(--mr-teal-dark) !important; }
+/* Panels, metrics, upload area and expanders */
+[data-testid="stVerticalBlockBorderWrapper"],div[data-testid="stExpander"],
+[data-testid="stAlert"],div[data-testid="stMetric"] { border-radius:14px !important; }
+[data-testid="stVerticalBlockBorderWrapper"] { background:var(--mr-surface) !important; border:1px solid var(--mr-line) !important; box-shadow:0 5px 18px rgba(23,32,51,.045); }
+div[data-testid="stMetric"] { background:#fff !important; border:1px solid var(--mr-line); padding:15px 16px; box-shadow:0 3px 10px rgba(23,32,51,.025); }
+div[data-testid="stMetricLabel"],div[data-testid="stMetricValue"] { color:var(--mr-ink) !important; }
+[data-testid="stFileUploader"] { background:#fff !important; border:1.5px dashed #9bb4c8 !important; border-radius:14px !important; padding:1rem !important; }
+[data-testid="stFileUploader"] *,[data-testid="stAlert"] * { color:#263548 !important; opacity:1 !important; }
+div[data-testid="stExpander"] { background:#fff !important; border:1px solid var(--mr-line) !important; }
+[data-testid="stExpander"] summary,[data-testid="stExpander"] summary p { color:var(--mr-ink) !important; font-weight:650; }
+[data-testid="stTabs"] button { color:#263548 !important; font-weight:600; }
+[data-testid="stTabs"] button[aria-selected="true"] { color:var(--mr-teal) !important; }
+hr { border-color:var(--mr-line) !important; margin:1.3rem 0 !important; }
+a { color:var(--mr-teal) !important; }
+:focus-visible { outline:2px solid var(--mr-teal) !important; outline-offset:2px !important; }
+@media (max-width: 760px) {
+  .block-container { padding:1rem 1rem 2rem; }
+  h1 { font-size:1.75rem !important; }
+  h2 { font-size:1.35rem !important; }
+}
 </style>
 """, unsafe_allow_html=True)
 
