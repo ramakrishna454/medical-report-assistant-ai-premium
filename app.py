@@ -17,63 +17,35 @@ st.set_page_config(page_title="AI Medical Report Assistant", page_icon="🩺", l
 # Premium visual refresh: layout and component styling only; app logic remains unchanged.
 st.markdown("""
 <style>
-:root { --mr-ink:#152238; --mr-muted:#64748b; --mr-teal:#0f766e; --mr-line:#dbe5ef; }
-[data-testid="stAppViewContainer"] {
-  background: radial-gradient(ellipse at 8% 0%, rgba(13,148,136,.09), transparent 34%),
-              linear-gradient(180deg, #f7fafc 0%, #eef4f8 100%);
-}
-[data-testid="stHeader"] { background: rgba(247,250,252,.82); }
-.block-container { max-width: 1440px; padding-top: 1.7rem; padding-bottom: 3rem; }
-h1 { color: var(--mr-ink); letter-spacing: -.035em; font-weight: 800 !important; }
-h2, h3 { color: var(--mr-ink); letter-spacing: -.02em; }
-p, li, label, [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
-[data-testid="stMarkdownContainer"] li, [data-testid="stMarkdownContainer"] span,
-[data-testid="stText"], [data-testid="stCaptionContainer"] { color: #263548 !important; }
-[data-testid="stExpander"] summary, [data-testid="stExpander"] summary p { color: #152238 !important; }
+:root { --mr-ink:#172033; --mr-muted:#475569; --mr-teal:#0f766e; --mr-line:#cbd5e1; }
+/* High-contrast, calm light theme: avoid translucent text and gradient overlays. */
+[data-testid="stAppViewContainer"], [data-testid="stMain"] { background:#f8fafc !important; color:#172033 !important; }
+[data-testid="stHeader"] { background:#f8fafc !important; }
+.block-container { max-width:1400px; padding-top:1.5rem; padding-bottom:3rem; }
+h1,h2,h3,h4,h5,h6 { color:#172033 !important; font-weight:750 !important; }
+p,li,label,span,small,strong, [data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li,
+[data-testid="stText"], [data-testid="stCaptionContainer"] { color:#263548 !important; opacity:1 !important; }
+[data-testid="stCaptionContainer"] p { color:#475569 !important; }
+[data-testid="stExpander"] summary, [data-testid="stExpander"] summary p { color:#172033 !important; }
 [data-baseweb="input"] input, [data-baseweb="textarea"] textarea,
-[data-baseweb="select"] input { color: #172033 !important; -webkit-text-fill-color: #172033 !important; }
-[data-baseweb="select"] [role="combobox"] { color: #172033 !important; }
-[data-testid="stFileUploader"] *, [data-testid="stAlert"] * { color: #263548; }
-.stButton > button, .stDownloadButton > button { color: #152238 !important; }
-.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] { color: #ffffff !important; }
-[data-testid="stTabs"] button { color: #263548 !important; }
-[data-testid="stMetricLabel"] *, [data-testid="stMetricValue"] * { color: #152238 !important; }
-[data-testid="stSidebar"] {
-  background: linear-gradient(180deg, #102a43 0%, #173f50 100%);
+[data-baseweb="select"] input, [data-baseweb="select"] [role="combobox"] {
+ color:#172033 !important; -webkit-text-fill-color:#172033 !important; background:#fff !important;
 }
-[data-testid="stSidebar"] * { color: #f1f5f9; }
-[data-testid="stSidebar"] [data-baseweb="select"] * { color: #172033; }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #e2e8f0; }
+[data-testid="stFileUploader"] *, [data-testid="stAlert"] * { color:#263548 !important; opacity:1 !important; }
 [data-testid="stFileUploader"], [data-testid="stVerticalBlockBorderWrapper"],
-div[data-testid="stExpander"], [data-testid="stAlert"] {
-  border-radius: 16px;
-}
-[data-testid="stFileUploader"] {
-  background: rgba(255,255,255,.78); border: 1px dashed #9fb8c9; padding: 1rem;
-}
-[data-testid="stVerticalBlockBorderWrapper"] {
-  background: rgba(255,255,255,.86); border: 1px solid var(--mr-line);
-  box-shadow: 0 8px 26px rgba(15, 23, 42, .045);
-}
-div[data-testid="stMetric"] {
-  background: #fff; border: 1px solid var(--mr-line); border-radius: 14px;
-  padding: 14px 16px; box-shadow: 0 5px 18px rgba(15,23,42,.04);
-}
-div[data-testid="stMetricLabel"] { color: var(--mr-muted); }
-div[data-testid="stMetricValue"] { color: var(--mr-ink); font-weight: 750; }
-.stButton > button, .stDownloadButton > button {
-  border-radius: 11px; font-weight: 650; min-height: 2.65rem;
-  border: 1px solid #cbd5e1; transition: all .15s ease;
-}
-.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] {
-  background: linear-gradient(135deg, #0f766e, #0e7490); color: white; border: 0;
-}
-.stButton > button:hover, .stDownloadButton > button:hover {
-  transform: translateY(-1px); box-shadow: 0 7px 18px rgba(15,118,110,.16);
-}
-[data-testid="stTabs"] button { font-weight: 650; }
-hr { border-color: #dbe5ef; }
-[data-testid="stCaptionContainer"] { color: #64748b; }
+div[data-testid="stExpander"], [data-testid="stAlert"] { border-radius:14px; }
+[data-testid="stFileUploader"] { background:#fff !important; border:1px dashed #94a3b8 !important; padding:1rem; }
+[data-testid="stVerticalBlockBorderWrapper"] { background:#fff !important; border:1px solid #d7e0ea !important; box-shadow:0 3px 12px rgba(15,23,42,.035); }
+div[data-testid="stMetric"] { background:#fff !important; border:1px solid #d7e0ea; border-radius:12px; padding:14px; }
+div[data-testid="stMetricLabel"], div[data-testid="stMetricValue"] { color:#172033 !important; }
+.stButton > button, .stDownloadButton > button { color:#172033 !important; background:#fff !important; border:1px solid #94a3b8 !important; border-radius:10px; font-weight:650; min-height:2.6rem; }
+.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] { color:#fff !important; background:#0f766e !important; border:1px solid #0f766e !important; }
+.stButton > button:hover, .stDownloadButton > button:hover { border-color:#0f766e !important; }
+[data-testid="stTabs"] button { color:#263548 !important; }
+[data-testid="stSidebar"] { background:#f1f5f9 !important; border-right:1px solid #d7e0ea; }
+[data-testid="stSidebar"] * { color:#172033 !important; opacity:1 !important; }
+hr { border-color:#d7e0ea !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -774,7 +746,7 @@ def delete_history_record(record_id):
 
 
 def render_voice_assistant(summary, key_findings=None, language="English"):
-    """Read a concise report summary with browser speech synthesis."""
+    """Read the report using a browser voice matching the selected language."""
     language_codes = {"English": "en-IN", "Hindi": "hi-IN", "Telugu": "te-IN"}
     language_code = language_codes.get(language, "en-IN")
     parts = ["Report summary.", str(summary or "").strip()]
@@ -790,52 +762,70 @@ def render_voice_assistant(summary, key_findings=None, language="English"):
     speech_text = " ".join(part for part in parts if part).strip()[:3000]
     speech_json = json.dumps(speech_text, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     lang_json = json.dumps(language_code)
+    language_label = {"English": "English", "Hindi": "Hindi", "Telugu": "Telugu"}.get(language, "English")
+    label_json = json.dumps(language_label)
     html = f"""
-    <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #cbd5e1;border-radius:14px;padding:16px;background:#ffffff;color:#152238;">
-      <div style="font-size:1rem;font-weight:750;margin-bottom:5px;color:#152238;">🔊 Listen to My Report</div>
-      <div style="font-size:.9rem;color:#40536a;margin-bottom:12px;">Listen to the short summary and main findings.</div>
+    <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #cbd5e1;border-radius:14px;padding:16px;background:#ffffff;color:#172033;">
+      <div style="font-size:1rem;font-weight:750;margin-bottom:5px;color:#172033;">🔊 Listen to My Report</div>
+      <div style="font-size:.9rem;color:#334155;margin-bottom:12px;">Listen to the short summary and main findings in the selected app language.</div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;">
-        <button id="mr-play" style="background:#087f73;color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;">▶ Listen</button>
-        <button id="mr-pause" style="background:#fff;color:#152238;border:1px solid #94a3b8;border-radius:9px;padding:10px 16px;cursor:pointer;">Ⅱ Pause / Resume</button>
-        <button id="mr-stop" style="background:#fff;color:#152238;border:1px solid #94a3b8;border-radius:9px;padding:10px 16px;cursor:pointer;">■ Stop</button>
+        <button id="mr-play" style="background:#0f766e;color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;">▶ Listen</button>
+        <button id="mr-pause" style="background:#fff;color:#172033;border:1px solid #64748b;border-radius:9px;padding:10px 16px;cursor:pointer;">Ⅱ Pause / Resume</button>
+        <button id="mr-stop" style="background:#fff;color:#172033;border:1px solid #64748b;border-radius:9px;padding:10px 16px;cursor:pointer;">■ Stop</button>
       </div>
-      <div id="mr-status" role="status" aria-live="polite" style="font-size:.85rem;color:#40536a;margin-top:11px;">Ready. Press Listen to hear the report.</div>
+      <div id="mr-status" role="status" aria-live="polite" style="font-size:.88rem;color:#334155;margin-top:11px;">Ready. Press Listen to hear the report.</div>
     </div>
     <script>
       (() => {{
         const textToRead = {speech_json};
         const wantedLang = {lang_json};
+        const languageLabel = {label_json};
         const status = document.getElementById('mr-status');
         const play = document.getElementById('mr-play');
         const pause = document.getElementById('mr-pause');
         const stop = document.getElementById('mr-stop');
         let utterance = null;
+        let voiceWaitTimer = null;
         function sayStatus(message) {{ status.textContent = message; }}
+        function findVoice() {{
+          const voices = window.speechSynthesis.getVoices() || [];
+          const prefix = wantedLang.slice(0, 2).toLowerCase();
+          return voices.find(v => (v.lang || '').toLowerCase() === wantedLang.toLowerCase())
+            || voices.find(v => (v.lang || '').toLowerCase().startsWith(prefix + '-'))
+            || voices.find(v => (v.lang || '').toLowerCase() === prefix);
+        }}
         function startSpeech() {{
           if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {{
-            sayStatus('Voice is not supported in this browser. Please try Google Chrome or Microsoft Edge.');
+            sayStatus('Voice playback is not supported here. Please use the latest Chrome or Edge.');
             return;
           }}
           window.speechSynthesis.cancel();
-          utterance = new SpeechSynthesisUtterance(textToRead);
-          utterance.lang = wantedLang;
-          utterance.rate = 0.9;
-          utterance.pitch = 1;
-          utterance.onstart = () => sayStatus('Reading your report aloud…');
-          utterance.onend = () => sayStatus('Finished reading the report.');
-          utterance.onerror = (event) => sayStatus('Could not play voice (' + event.error + '). Check that your device is not muted, then try again.');
-          // Wait briefly for the browser to populate its installed voice list.
-          const voices = window.speechSynthesis.getVoices();
-          const matching = voices.find(v => v.lang && v.lang.toLowerCase() === wantedLang.toLowerCase())
-            || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(wantedLang.slice(0,2).toLowerCase()));
-          if (matching) utterance.voice = matching;
-          window.speechSynthesis.speak(utterance);
-          setTimeout(() => {{
-            if (window.speechSynthesis.pending && !window.speechSynthesis.speaking) {{
-              window.speechSynthesis.cancel();
-              sayStatus('Your browser did not start voice playback. Try Chrome/Edge and check your device audio settings.');
+          if (voiceWaitTimer) clearInterval(voiceWaitTimer);
+          sayStatus('Checking available ' + languageLabel + ' voices…');
+          let attempts = 0;
+          const trySpeak = () => {{
+            attempts += 1;
+            const voice = findVoice();
+            if (voice || attempts >= 20) {{
+              clearInterval(voiceWaitTimer);
+              voiceWaitTimer = null;
+              if (!voice && wantedLang.slice(0,2) !== 'en') {{
+                sayStatus('No ' + languageLabel + ' voice is available to this browser yet. Restart Chrome, then check Windows speech voices and try again.');
+                return;
+              }}
+              utterance = new SpeechSynthesisUtterance(textToRead);
+              utterance.lang = wantedLang;
+              utterance.rate = 0.9;
+              utterance.pitch = 1;
+              if (voice) utterance.voice = voice;
+              utterance.onstart = () => sayStatus('Reading your report in ' + languageLabel + '…');
+              utterance.onend = () => sayStatus('Finished reading the report.');
+              utterance.onerror = (event) => sayStatus('Voice playback error: ' + event.error + '. Check device audio and try again.');
+              window.speechSynthesis.speak(utterance);
             }}
-          }}, 2500);
+          }};
+          trySpeak();
+          if (!voiceWaitTimer) voiceWaitTimer = setInterval(trySpeak, 150);
         }}
         play.addEventListener('click', startSpeech);
         pause.addEventListener('click', () => {{
@@ -847,17 +837,16 @@ def render_voice_assistant(summary, key_findings=None, language="English"):
           }} else {{ sayStatus('Press Listen to start playback.'); }}
         }});
         stop.addEventListener('click', () => {{
+          if (voiceWaitTimer) clearInterval(voiceWaitTimer);
+          voiceWaitTimer = null;
           if ('speechSynthesis' in window) window.speechSynthesis.cancel();
           sayStatus('Playback stopped.');
         }});
-        if ('speechSynthesis' in window) {{
-          window.speechSynthesis.getVoices();
-          window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
-        }}
+        if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
       }})();
     </script>
     """
-    components.html(html, height=205, scrolling=False)
+    components.html(html, height=215, scrolling=False)
 
 
 def render_ai_analysis(raw_output, was_truncated=False):
