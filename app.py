@@ -745,35 +745,128 @@ def delete_history_record(record_id):
 
 
 
-def render_voice_assistant(summary, key_findings=None, language="English"):
-    """Read the report using a browser voice matching the selected language."""
-    language_codes = {"English": "en-IN", "Hindi": "hi-IN", "Telugu": "te-IN"}
-    language_code = language_codes.get(language, "en-IN")
-    parts = ["Report summary.", str(summary or "").strip()]
-    if key_findings:
-        clean_findings = [
-            str(item.get("finding", "")).strip()
-            for item in key_findings
-            if isinstance(item, dict) and str(item.get("finding", "")).strip()
-        ]
-        if clean_findings:
-            parts.append("Key findings.")
-            parts.extend(clean_findings[:5])
-    speech_text = " ".join(part for part in parts if part).strip()[:3000]
+def render_voice_assistant(data, language="English"):
+    """Read all structured AI-extracted report information using browser speech."""
+    if not isinstance(data, dict):
+        data = {}
+
+    sections = []
+
+    def add_section(title, content):
+        content = str(content or "").strip()
+        if content:
+            sections.append(f"{title}. {content}")
+
+    add_section("Report type", data.get("report_type"))
+    add_section("Report summary", data.get("plain_language_summary"))
+
+    def add_items(title, key, field):
+        items = data.get(key) or []
+        values = []
+        for item in items:
+            if isinstance(item, dict):
+                value = str(item.get(field, "") or "").strip()
+                quote = str(item.get("source_quote", "") or "").strip()
+                if value:
+                    values.append(value + (f". The report wording is: {quote}" if quote else ""))
+            elif str(item).strip():
+                values.append(str(item).strip())
+        if values:
+            add_section(title, " ".join(values))
+
+    add_items("Key findings", "key_findings", "finding")
+    add_items("Normal or negative findings", "normal_or_negative_findings", "finding")
+
+    labs = data.get("laboratory_results") or []
+    lab_descriptions = []
+    for item in labs:
+        if not isinstance(item, dict):
+            continue
+        parts = []
+        parameter = str(item.get("parameter", "") or "").strip()
+        value = str(item.get("value", "") or "").strip()
+        unit = str(item.get("unit", "") or "").strip()
+        reference = str(item.get("reference_range", "") or "").strip()
+        status = str(item.get("status_as_reported", "") or "").strip()
+        explanation = str(item.get("plain_language_explanation", "") or "").strip()
+        quote = str(item.get("source_quote", "") or "").strip()
+        if parameter:
+            parts.append(parameter)
+        if value:
+            parts.append(f"value {value}")
+        if unit and unit.lower() not in {"not stated", "not detected"}:
+            parts.append(unit)
+        if reference and reference.lower() not in {"not stated", "not detected"}:
+            parts.append(f"reference range {reference}")
+        if status and status.lower() != "not stated":
+            parts.append(f"status stated in report: {status}")
+        description = ", ".join(parts)
+        if explanation:
+            description += f". Explanation: {explanation}"
+        if quote:
+            description += f". Source wording: {quote}"
+        if description:
+            lab_descriptions.append(description)
+    if lab_descriptions:
+        add_section("Laboratory results, including values, units, reference ranges and explanations",
+                    " ".join(lab_descriptions))
+
+    add_items("Recommendations written in the report", "recommendations_written_in_report", "recommendation")
+
+    terms = data.get("terms_explained") or []
+    term_descriptions = []
+    for item in terms:
+        if isinstance(item, dict):
+            term = str(item.get("term", "") or "").strip()
+            explanation = str(item.get("explanation", "") or "").strip()
+            quote = str(item.get("source_quote", "") or "").strip()
+            if term or explanation:
+                text = f"{term}. {explanation}".strip()
+                if quote:
+                    text += f". The term appears in this report wording: {quote}"
+                term_descriptions.append(text)
+    if term_descriptions:
+        add_section("Medical terms explained", " ".join(term_descriptions))
+
+    for title, key in [
+        ("Questions to discuss with your clinician", "questions_to_ask_clinician"),
+        ("Uncertainties and missing context", "uncertainties_or_missing_context"),
+    ]:
+        values = [str(x).strip() for x in (data.get(key) or []) if str(x).strip()]
+        if values:
+            add_section(title, " ".join(values))
+
+    urgent = data.get("urgent_language_in_report") or []
+    urgent_descriptions = []
+    for item in urgent:
+        if isinstance(item, dict):
+            wording = str(item.get("text", "") or "").strip()
+            explanation = str(item.get("why_it_may_need_prompt_attention", "") or "").strip()
+            if wording or explanation:
+                urgent_descriptions.append(f"Report wording: {wording}. Explanation: {explanation}")
+    if urgent_descriptions:
+        add_section("Urgent or critical wording explicitly present in the report",
+                    " ".join(urgent_descriptions))
+
+    speech_text = " ".join(sections).strip()
+    if not speech_text:
+        speech_text = "No report explanation is available to read yet. Please analyze the report first."
+
     speech_json = json.dumps(speech_text, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
-    lang_json = json.dumps(language_code)
+    lang_json = json.dumps({"English": "en-IN", "Hindi": "hi-IN", "Telugu": "te-IN"}.get(language, "en-IN"))
     language_label = {"English": "English", "Hindi": "Hindi", "Telugu": "Telugu"}.get(language, "English")
     label_json = json.dumps(language_label)
+
     html = f"""
     <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #cbd5e1;border-radius:14px;padding:16px;background:#ffffff;color:#172033;">
-      <div style="font-size:1rem;font-weight:750;margin-bottom:5px;color:#172033;">🔊 Listen to My Report</div>
-      <div style="font-size:.9rem;color:#334155;margin-bottom:12px;">Listen to the short summary and main findings in the selected app language.</div>
+      <div style="font-size:1rem;font-weight:750;margin-bottom:5px;color:#172033;">🔊 Listen to My Full Report</div>
+      <div style="font-size:.9rem;color:#334155;margin-bottom:12px;">Listen to the extracted report details and AI explanations in the selected language.</div>
       <div style="display:flex;gap:9px;flex-wrap:wrap;">
-        <button id="mr-play" style="background:#0f766e;color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;">▶ Listen</button>
+        <button id="mr-play" style="background:#0f766e;color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;">▶ Listen to Full Report</button>
         <button id="mr-pause" style="background:#fff;color:#172033;border:1px solid #64748b;border-radius:9px;padding:10px 16px;cursor:pointer;">Ⅱ Pause / Resume</button>
         <button id="mr-stop" style="background:#fff;color:#172033;border:1px solid #64748b;border-radius:9px;padding:10px 16px;cursor:pointer;">■ Stop</button>
       </div>
-      <div id="mr-status" role="status" aria-live="polite" style="font-size:.88rem;color:#334155;margin-top:11px;">Ready. Press Listen to hear the report.</div>
+      <div id="mr-status" role="status" aria-live="polite" style="font-size:.88rem;color:#334155;margin-top:11px;">Ready. Press Listen to hear all available report information.</div>
     </div>
     <script>
       (() => {{
@@ -784,9 +877,12 @@ def render_voice_assistant(summary, key_findings=None, language="English"):
         const play = document.getElementById('mr-play');
         const pause = document.getElementById('mr-pause');
         const stop = document.getElementById('mr-stop');
-        let utterance = null;
-        let voiceWaitTimer = null;
+        let chunks = [];
+        let current = 0;
+        let stopped = false;
+
         function sayStatus(message) {{ status.textContent = message; }}
+
         function findVoice() {{
           const voices = window.speechSynthesis.getVoices() || [];
           const prefix = wantedLang.slice(0, 2).toLowerCase();
@@ -794,59 +890,81 @@ def render_voice_assistant(summary, key_findings=None, language="English"):
             || voices.find(v => (v.lang || '').toLowerCase().startsWith(prefix + '-'))
             || voices.find(v => (v.lang || '').toLowerCase() === prefix);
         }}
-        function startSpeech() {{
+
+        function splitIntoChunks(text, maxLength=1700) {{
+          const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+          const result = [];
+          let chunk = '';
+          sentences.forEach(sentence => {{
+            const next = (chunk + ' ' + sentence).trim();
+            if (next.length > maxLength && chunk) {{
+              result.push(chunk);
+              chunk = sentence.trim();
+            }} else {{
+              chunk = next;
+            }}
+          }});
+          if (chunk) result.push(chunk);
+          return result;
+        }}
+
+        function speakNext() {{
+          if (stopped || current >= chunks.length) {{
+            if (!stopped) sayStatus('Finished reading all available report information.');
+            return;
+          }}
+          const utterance = new SpeechSynthesisUtterance(chunks[current]);
+          utterance.lang = wantedLang;
+          utterance.rate = 0.88;
+          utterance.pitch = 1;
+          const voice = findVoice();
+          if (voice) utterance.voice = voice;
+          utterance.onstart = () => sayStatus('Reading section ' + (current + 1) + ' of ' + chunks.length + ' in ' + languageLabel + '…');
+          utterance.onend = () => {{ current += 1; speakNext(); }};
+          utterance.onerror = (event) => sayStatus('Voice playback error: ' + event.error + '. Try Microsoft Edge and check device audio.');
+          window.speechSynthesis.speak(utterance);
+        }}
+
+        play.addEventListener('click', () => {{
           if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {{
-            sayStatus('Voice playback is not supported here. Please use the latest Chrome or Edge.');
+            sayStatus('Voice playback is not supported in this browser. Please use Microsoft Edge.');
             return;
           }}
           window.speechSynthesis.cancel();
-          if (voiceWaitTimer) clearInterval(voiceWaitTimer);
-          sayStatus('Checking available ' + languageLabel + ' voices…');
-          let attempts = 0;
-          const trySpeak = () => {{
-            attempts += 1;
-            const voice = findVoice();
-            if (voice || attempts >= 20) {{
-              clearInterval(voiceWaitTimer);
-              voiceWaitTimer = null;
-              if (!voice && wantedLang.slice(0,2) !== 'en') {{
-                sayStatus('No ' + languageLabel + ' voice is available to this browser yet. Restart Chrome, then check Windows speech voices and try again.');
-                return;
-              }}
-              utterance = new SpeechSynthesisUtterance(textToRead);
-              utterance.lang = wantedLang;
-              utterance.rate = 0.9;
-              utterance.pitch = 1;
-              if (voice) utterance.voice = voice;
-              utterance.onstart = () => sayStatus('Reading your report in ' + languageLabel + '…');
-              utterance.onend = () => sayStatus('Finished reading the report.');
-              utterance.onerror = (event) => sayStatus('Voice playback error: ' + event.error + '. Check device audio and try again.');
-              window.speechSynthesis.speak(utterance);
-            }}
-          }};
-          trySpeak();
-          if (!voiceWaitTimer) voiceWaitTimer = setInterval(trySpeak, 150);
-        }}
-        play.addEventListener('click', startSpeech);
+          stopped = false;
+          current = 0;
+          chunks = splitIntoChunks(textToRead);
+          if (!findVoice() && wantedLang.slice(0, 2) !== 'en') {{
+            sayStatus('No ' + languageLabel + ' voice is available in this browser. Please use Microsoft Edge, where this voice is available.');
+            return;
+          }}
+          speakNext();
+        }});
+
         pause.addEventListener('click', () => {{
           if (!('speechSynthesis' in window)) return;
           if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {{
-            window.speechSynthesis.pause(); sayStatus('Paused. Press Pause / Resume to continue.');
+            window.speechSynthesis.pause();
+            sayStatus('Playback paused. Press Pause / Resume to continue.');
           }} else if (window.speechSynthesis.paused) {{
-            window.speechSynthesis.resume(); sayStatus('Continuing playback…');
-          }} else {{ sayStatus('Press Listen to start playback.'); }}
+            window.speechSynthesis.resume();
+            sayStatus('Continuing playback…');
+          }} else {{
+            sayStatus('Press Listen to start playback.');
+          }}
         }});
+
         stop.addEventListener('click', () => {{
-          if (voiceWaitTimer) clearInterval(voiceWaitTimer);
-          voiceWaitTimer = null;
+          stopped = true;
           if ('speechSynthesis' in window) window.speechSynthesis.cancel();
           sayStatus('Playback stopped.');
         }});
+
         if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
       }})();
     </script>
     """
-    components.html(html, height=215, scrolling=False)
+    components.html(html, height=220, scrolling=False)
 
 
 def render_ai_analysis(raw_output, was_truncated=False):
@@ -864,7 +982,7 @@ def render_ai_analysis(raw_output, was_truncated=False):
     st.markdown("#### Plain-language summary")
     summary_text = data.get("plain_language_summary") or "No summary returned."
     st.write(summary_text)
-    render_voice_assistant(summary_text, data.get("key_findings") or [], UI_LANGUAGE)
+    render_voice_assistant(data, UI_LANGUAGE)
 
     def render_quoted_items(title, key, field):
         items = data.get(key) or []
