@@ -1074,284 +1074,309 @@ with st.sidebar:
     st.caption("AI explanations use the selected app language. Medical values, units, abbreviations, and exact source quotes are preserved.")
     st.markdown("[API pricing](https://developers.openai.com/api/docs/pricing) · [API quickstart](https://developers.openai.com/api/reference/python)")
 
-force_ocr = st.checkbox(
-    "Run OCR on every PDF page even if text is available (slower; useful for mixed or poor-quality PDFs)",
-    value=False,
-)
-uploaded = st.file_uploader("Upload a medical report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"])
 
-
-with st.expander("Compare two reports (older vs newer)", expanded=False):
-    st.write("Compare report changes using AI. The extracted text from both reports is sent to the configured OpenAI API only after you select consent and click the comparison button.")
-    older_file = st.file_uploader("Older report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="older_compare_upload")
-    newer_file = st.file_uploader("Newer report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="newer_compare_upload")
-    compare_consent = st.checkbox("I consent to send the extracted text of both reports to OpenAI for comparison and am authorized to share them.", key="compare_consent")
-    if st.button("Compare reports with AI", disabled=not (older_file and newer_file and compare_consent and model_name.strip()), key="compare_reports_button"):
-        try:
-            with st.spinner("Extracting and comparing both reports..."):
-                old_text = extract_uploaded_text(older_file, force_ocr=force_ocr)
-                new_text = extract_uploaded_text(newer_file, force_ocr=force_ocr)
-                compare_output, compare_truncated = compare_reports_with_ai(old_text, new_text, model_name.strip(), language_name)
-            st.session_state["medical_report_compare_output"] = compare_output
-            st.session_state["medical_report_compare_truncated"] = compare_truncated
-            st.session_state["medical_report_compare_names"] = (older_file.name, newer_file.name)
-            st.session_state["medical_report_compare_hash"] = hashlib.sha256((old_text + "\0" + new_text).encode("utf-8", errors="replace")).hexdigest()
-            st.session_state["medical_report_compare_old_text"] = old_text
-            st.session_state["medical_report_compare_new_text"] = new_text
-        except Exception as exc:
-            st.error("Report comparison could not be completed.")
-            st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-    compare_output = st.session_state.get("medical_report_compare_output", "")
-    if compare_output:
-        if st.session_state.get("medical_report_compare_truncated"):
-            st.warning("One or both reports were truncated before comparison; later content may be missing.")
-        try:
-            comparison = json.loads(compare_output)
-            st.markdown("#### Comparison summary")
-            st.write(comparison.get("overall_summary", "No summary returned."))
-            result_rows = comparison.get("results_comparison") or []
-            if result_rows:
-                st.markdown("#### Results compared")
-                st.dataframe([{
-                    "Parameter": x.get("parameter", ""),
-                    "Older value": str(x.get("older_value", "Not stated")) + (" " + str(x.get("older_unit", "")) if x.get("older_unit") else ""),
-                    "Newer value": str(x.get("newer_value", "Not stated")) + (" " + str(x.get("newer_unit", "")) if x.get("newer_unit") else ""),
-                    "Older reference range": x.get("older_reference_range", "Not stated"),
-                    "Newer reference range": x.get("newer_reference_range", "Not stated"),
-                    "Change described by AI": x.get("change_description", ""),
-                    "Older source quote": x.get("older_source_quote", ""),
-                    "Newer source quote": x.get("newer_source_quote", ""),
-                } for x in result_rows if isinstance(x, dict)], use_container_width=True, hide_index=True)
-                chart_rows = []
-                for x in result_rows:
-                    if not isinstance(x, dict):
-                        continue
-                    vals=[]
-                    for key in ("older_value", "newer_value"):
-                        m=re.search(r"[-+]?\d[\d,]*(?:\.\d+)?", str(x.get(key, "")))
-                        vals.append(float(m.group(0).replace(",", "")) if m else None)
-                    if vals[0] is not None and vals[1] is not None and x.get("parameter"):
-                        chart_rows.append({"Parameter": str(x["parameter"]), "Older report": vals[0], "Newer report": vals[1]})
-                if chart_rows:
-                    st.markdown("#### Numeric change overview (units may differ; verify before interpreting)")
-                    import pandas as pd
-                    chart_data = pd.DataFrame(
-                        {row["Parameter"]: [row["Older report"], row["Newer report"]] for row in chart_rows},
-                        index=["Older report", "Newer report"],
-                    )
-                    st.line_chart(chart_data)
-                    st.caption("The chart compares numeric values only. Confirm that both tests use matching units and methods before interpreting changes.")
-            finding_rows = comparison.get("findings_comparison") or []
-            if finding_rows:
-                st.markdown("#### Narrative findings compared")
-                for item in finding_rows:
-                    if isinstance(item, dict):
-                        st.markdown(f"**{item.get('topic', 'Finding')}**")
-                        st.write("Older: " + str(item.get("older_finding", "Not stated")))
-                        st.caption("Older source: “" + str(item.get("older_source_quote", "")) + "”")
-                        st.write("Newer: " + str(item.get("newer_finding", "Not stated")))
-                        st.caption("Newer source: “" + str(item.get("newer_source_quote", "")) + "”")
-                        st.write(item.get("change_description", ""))
-            if comparison.get("limitations"):
-                st.markdown("#### Limitations")
-                for item in comparison["limitations"]:
-                    st.write("• " + str(item))
-            st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
-        except (json.JSONDecodeError, TypeError):
-            st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
-            st.text(compare_output)
-
-if uploaded:
-    raw = uploaded.getvalue()
-    suffix = Path(uploaded.name).suffix.lower()
-    try:
-        with st.spinner("Reading report..."):
-            if suffix == ".pdf":
-                report_text = extract_pdf_text(raw)
-                if force_ocr or len(re.sub(r"\s+", "", report_text)) < 100:
-                    try:
-                        ocr_text = extract_ocr_pdf(raw)
-                        if ocr_text and (force_ocr or len(ocr_text) > len(report_text)):
-                            report_text = ocr_text
-                            st.success("Text extracted using OCR (scanned-page recognition).")
-                    except Exception as exc:
-                        if not report_text:
-                            st.error("This PDF appears to be scanned or image-only, and OCR could not run.")
-                            st.caption(str(exc))
-                            st.stop()
-                        st.warning("OCR could not run, so the app is using the PDF's selectable text instead.")
-                        st.caption(str(exc))
-            else:
-                report_text = extract_image_text(raw)
-                st.success("Text extracted from the image using OCR.")
-    except Exception as exc:
-        st.error("Could not read this file.")
-        st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-        st.stop()
-
-    if not report_text.strip():
-        st.error("No readable text was extracted. Try a clearer scan or another file.")
-        st.stop()
-
-    report_types = classify_report(report_text)
-    st.success("Text extracted.")
-    st.subheader("Detected report category (rule-based)")
-    st.write(" · ".join(report_types))
-    st.caption("This category is a keyword-based guess and may be incomplete or wrong.")
-    with st.expander("View extracted text (review for OCR errors)"):
-        st.text_area("Extracted text", report_text, height=260)
-
-    report_fingerprint = hashlib.sha256(report_text.encode("utf-8", errors="replace")).hexdigest()
-    st.subheader("AI-powered report explanation")
-    st.write("AI can summarize a wider variety of written reports than the built-in rules. It may still omit or misread information.")
-    consent = st.checkbox(
-        "I understand that the extracted report text may contain sensitive health information and will be sent to OpenAI's API for analysis. I have permission to share it.",
-        value=False,
-        key="ai_report_consent",
-    )
-    if st.button("Analyze report with AI", type="primary", disabled=not consent or not model_name.strip()):
-        try:
-            with st.spinner("Analyzing report text with AI..."):
-                ai_text, truncated = analyze_report_with_ai(report_text, model_name.strip(), language_name)
-            st.session_state["medical_report_ai_output"] = ai_text
-            st.session_state["medical_report_ai_truncated"] = truncated
-            st.session_state["medical_report_ai_source_name"] = uploaded.name
-            st.session_state["medical_report_ai_source_hash"] = report_fingerprint
-            st.session_state["medical_report_ai_language"] = language_name
-        except Exception as exc:
-            st.error("AI analysis could not be completed.")
-            st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-    if (st.session_state.get("medical_report_ai_output")
-            and st.session_state.get("medical_report_ai_source_name") == uploaded.name
-            and st.session_state.get("medical_report_ai_source_hash") == report_fingerprint
-            and st.session_state.get("medical_report_ai_language") == language_name):
-        with st.container(border=True):
-            render_ai_analysis(
-                st.session_state["medical_report_ai_output"],
-                st.session_state.get("medical_report_ai_truncated", False),
-            )
-            st.download_button(
-                "Download professional PDF summary",
-                data=create_pdf_summary(uploaded.name, report_text, st.session_state["medical_report_ai_output"], language_name),
-                file_name="medical_report_summary.pdf",
-                mime="application/pdf",
-            )
-            if st.button("Save this analysis to local history", key="save_current_history"):
-                try:
-                    save_history(uploaded.name, language_name, report_text, st.session_state["medical_report_ai_output"])
-                    st.success("Saved locally on this computer.")
-                except Exception as exc:
-                    st.error(f"Could not save history: {type(exc).__name__}: {exc}")
-        st.download_button(
-            "Download AI analysis (JSON)",
-            data=st.session_state["medical_report_ai_output"],
-            file_name="medical_report_ai_analysis.json",
-            mime="application/json",
-        )
-
+with st.sidebar:
     st.divider()
-    st.subheader("Rule-based laboratory extraction (comparison aid)")
-    lab_rows = detect_lab_results(report_text)
-    if lab_rows:
-        rule_flagged = [row for row in lab_rows if row.get("Status") in {"Below stated range", "Above stated range"}]
-        if rule_flagged:
-            st.warning("Potential out-of-range values detected by the rule-based parser: " + "; ".join(f"{row.get('Parameter')} ({row.get('Status')})" for row in rule_flagged) + ". Check the original report carefully.")
-        st.dataframe(lab_rows, use_container_width=True, hide_index=True)
-        st.download_button(
-            "Download recognized lab values (CSV)",
-            data=csv_bytes(lab_rows),
-            file_name="medical_report_results.csv",
-            mime="text/csv",
+    st.subheader("Navigation")
+    selected_page = st.radio(
+        "Choose a section",
+        ["Home", "Upload & OCR", "Old vs New Comparison", "Report History"],
+        key="main_navigation",
+        label_visibility="collapsed",
+    )
+
+if selected_page == "Home":
+    st.title("Welcome to your Medical Report Assistant")
+    st.write("Upload a medical report, review extracted text, understand the AI explanation, or compare reports over time.")
+    st.markdown("### Choose where to begin")
+    st.markdown("- **Upload & OCR:** Read a PDF or scanned report and review extracted text and analysis.\n- **Old vs New Comparison:** Compare two reports and review changes.\n- **Report History:** View or delete analyses saved on this computer.")
+    st.info("Educational support only. This app does not diagnose or prescribe treatment. Verify all extracted information against the original report.")
+elif selected_page == "Upload & OCR":
+    st.title("Upload & OCR")
+    st.caption("Upload a medical report, extract its text, and review the AI explanation.")
+    force_ocr = st.checkbox(
+        "Run OCR on every PDF page even if text is available (slower; useful for mixed or poor-quality PDFs)",
+        value=False,
+    )
+    uploaded = st.file_uploader("Upload a medical report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"])
+
+    if uploaded:
+        raw = uploaded.getvalue()
+        suffix = Path(uploaded.name).suffix.lower()
+        try:
+            with st.spinner("Reading report..."):
+                if suffix == ".pdf":
+                    report_text = extract_pdf_text(raw)
+                    if force_ocr or len(re.sub(r"\s+", "", report_text)) < 100:
+                        try:
+                            ocr_text = extract_ocr_pdf(raw)
+                            if ocr_text and (force_ocr or len(ocr_text) > len(report_text)):
+                                report_text = ocr_text
+                                st.success("Text extracted using OCR (scanned-page recognition).")
+                        except Exception as exc:
+                            if not report_text:
+                                st.error("This PDF appears to be scanned or image-only, and OCR could not run.")
+                                st.caption(str(exc))
+                                st.stop()
+                            st.warning("OCR could not run, so the app is using the PDF's selectable text instead.")
+                            st.caption(str(exc))
+                else:
+                    report_text = extract_image_text(raw)
+                    st.success("Text extracted from the image using OCR.")
+        except Exception as exc:
+            st.error("Could not read this file.")
+            st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+            st.stop()
+
+        if not report_text.strip():
+            st.error("No readable text was extracted. Try a clearer scan or another file.")
+            st.stop()
+
+        report_types = classify_report(report_text)
+        st.success("Text extracted.")
+        st.subheader("Detected report category (rule-based)")
+        st.write(" · ".join(report_types))
+        st.caption("This category is a keyword-based guess and may be incomplete or wrong.")
+        with st.expander("View extracted text (review for OCR errors)"):
+            st.text_area("Extracted text", report_text, height=260)
+
+        report_fingerprint = hashlib.sha256(report_text.encode("utf-8", errors="replace")).hexdigest()
+        st.subheader("AI-powered report explanation")
+        st.write("AI can summarize a wider variety of written reports than the built-in rules. It may still omit or misread information.")
+        consent = st.checkbox(
+            "I understand that the extracted report text may contain sensitive health information and will be sent to OpenAI's API for analysis. I have permission to share it.",
+            value=False,
+            key="ai_report_consent",
         )
-        st.caption("This parser supports a limited list of common test names. Value/range pairing can be wrong; verify every row against the source.")
-    else:
-        st.info("The built-in parser did not confidently identify any supported lab values. The AI section may still extract additional report content.")
+        if st.button("Analyze report with AI", type="primary", disabled=not consent or not model_name.strip()):
+            try:
+                with st.spinner("Analyzing report text with AI..."):
+                    ai_text, truncated = analyze_report_with_ai(report_text, model_name.strip(), language_name)
+                st.session_state["medical_report_ai_output"] = ai_text
+                st.session_state["medical_report_ai_truncated"] = truncated
+                st.session_state["medical_report_ai_source_name"] = uploaded.name
+                st.session_state["medical_report_ai_source_hash"] = report_fingerprint
+                st.session_state["medical_report_ai_language"] = language_name
+            except Exception as exc:
+                st.error("AI analysis could not be completed.")
+                st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+        if (st.session_state.get("medical_report_ai_output")
+                and st.session_state.get("medical_report_ai_source_name") == uploaded.name
+                and st.session_state.get("medical_report_ai_source_hash") == report_fingerprint
+                and st.session_state.get("medical_report_ai_language") == language_name):
+            with st.container(border=True):
+                render_ai_analysis(
+                    st.session_state["medical_report_ai_output"],
+                    st.session_state.get("medical_report_ai_truncated", False),
+                )
+                st.download_button(
+                    "Download professional PDF summary",
+                    data=create_pdf_summary(uploaded.name, report_text, st.session_state["medical_report_ai_output"], language_name),
+                    file_name="medical_report_summary.pdf",
+                    mime="application/pdf",
+                )
+                if st.button("Save this analysis to local history", key="save_current_history"):
+                    try:
+                        save_history(uploaded.name, language_name, report_text, st.session_state["medical_report_ai_output"])
+                        st.success("Saved locally on this computer.")
+                    except Exception as exc:
+                        st.error(f"Could not save history: {type(exc).__name__}: {exc}")
+            st.download_button(
+                "Download AI analysis (JSON)",
+                data=st.session_state["medical_report_ai_output"],
+                file_name="medical_report_ai_analysis.json",
+                mime="application/json",
+            )
 
-    st.subheader("Rule-based report sections (fallback)")
-    findings_raw = extract_section(report_text, ["Findings", "Observations"])
-    impression_raw = extract_section(report_text, ["Impression", "Conclusion", "Conclusions", "Opinion", "Interpretation", "Diagnosis"])
-    recommendations_raw = extract_section(report_text, ["Recommendation", "Recommendations", "Advice", "Suggestion", "Plan"])
-    key_findings, normal_observations, recommendations = split_radiology_narrative(findings_raw, impression_raw, recommendations_raw)
-
-    st.markdown("**Findings detected by rules**")
-    if key_findings:
-        for item in key_findings:
-            st.write("• " + item)
-    elif findings_raw or impression_raw:
-        st.info("No separate main finding could be confidently separated from the extracted wording. Review the source text.")
-    else:
-        st.caption("No clear Findings or Impression heading detected.")
-
-    st.markdown("**Normal / negative observations detected by rules**")
-    if normal_observations:
-        for item in normal_observations:
-            st.write("• " + item)
-    else:
-        st.caption("No clearly worded normal or negative observations were separated.")
-
-    st.markdown("**Recommendations detected by rules**")
-    if recommendations:
-        for item in recommendations:
-            st.write("• " + item)
-    else:
-        st.caption("No separate recommendation was confidently detected.")
-
-    explainers = explain_radiology(" ".join([findings_raw, impression_raw, recommendations_raw, *key_findings, *normal_observations, *recommendations]))
-    if explainers:
-        st.markdown("**Built-in term explanations**")
-        for note in explainers:
-            st.write("• " + note)
-
-    st.warning(
-        "For understanding only—not a diagnosis or treatment plan. This app analyzes the written report text, not the actual pixels of an X-ray, CT, or MRI. "
-        "Do not delay urgent care because of an app summary. If the report says critical/urgent or you have severe or rapidly worsening symptoms, contact a qualified healthcare professional or local emergency service."
-    )
-else:
-    st.markdown(
-        "### How to use\n"
-        "1. Upload a PDF or a scan/photo of a report.\n"
-        "2. The app extracts selectable PDF text or uses OCR for scans.\n"
-        "3. Review the extracted text for mistakes.\n"
-        "4. For AI analysis, check the privacy consent box and click **Analyze report with AI**.\n"
-        "5. Compare AI-extracted values and quotes with the original report before relying on them.\n\n"
-        "### Setup and limitations\n"
-        "- AI analysis requires an OpenAI API key and internet access; API usage is billed separately from a ChatGPT subscription.\n"
-        "- OCR for scanned files requires the Tesseract application and the Python packages `pytesseract` and `Pillow`.\n"
-        "- The built-in laboratory parser supports a limited set of test names; AI extraction is broader but not guaranteed complete or correct.\n"
-        "- The app reads the written report, not medical image pixels, and does not diagnose or recommend treatment.\n"
-        "- Avoid uploading reports unless you are comfortable sending extracted text to the configured AI provider."
-    )
-
-
-st.divider()
-with st.expander("Local report history (stored on this computer)", expanded=False):
-    st.warning("History contains sensitive report text and AI output. It is stored in a local SQLite file next to this app. Use only on a trusted computer; delete records when no longer needed.")
-    try:
-        history_rows = read_history()
-        if not history_rows:
-            st.info("No saved analyses yet. Analyze a report, then click 'Save this analysis to local history'.")
+        st.divider()
+        st.subheader("Rule-based laboratory extraction (comparison aid)")
+        lab_rows = detect_lab_results(report_text)
+        if lab_rows:
+            rule_flagged = [row for row in lab_rows if row.get("Status") in {"Below stated range", "Above stated range"}]
+            if rule_flagged:
+                st.warning("Potential out-of-range values detected by the rule-based parser: " + "; ".join(f"{row.get('Parameter')} ({row.get('Status')})" for row in rule_flagged) + ". Check the original report carefully.")
+            st.dataframe(lab_rows, use_container_width=True, hide_index=True)
+            st.download_button(
+                "Download recognized lab values (CSV)",
+                data=csv_bytes(lab_rows),
+                file_name="medical_report_results.csv",
+                mime="text/csv",
+            )
+            st.caption("This parser supports a limited list of common test names. Value/range pairing can be wrong; verify every row against the source.")
         else:
-            options = {f"#{r[0]} · {r[1]} · {r[2]} · {r[3]}": r[0] for r in history_rows}
-            selected_label = st.selectbox("Saved analysis", list(options.keys()), key="history_record_select")
-            record = get_history_record(options[selected_label])
-            if record:
-                st.markdown(f"**File:** {record[2]}  ·  **Saved:** {record[1]}  ·  **Language:** {record[3]}")
-                try:
-                    saved_json = json.loads(record[5])
-                    st.write(saved_json.get("plain_language_summary", "No summary stored."))
-                    saved_labs = saved_json.get("laboratory_results") or []
-                    if saved_labs:
-                        st.dataframe([{
-                            "Parameter": x.get("parameter", ""), "Value": x.get("value", ""), "Unit": x.get("unit", ""),
-                            "Reference range": x.get("reference_range", ""), "Status as reported": x.get("status_as_reported", ""),
-                            "Range-based check": classify_numeric_range(x.get("value", ""), x.get("reference_range", ""))
-                        } for x in saved_labs if isinstance(x, dict)], use_container_width=True, hide_index=True)
-                except Exception:
-                    st.text(record[5])
-                st.download_button("Download saved AI analysis (JSON)", data=record[5], file_name=f"saved_analysis_{record[0]}.json", mime="application/json", key=f"history_download_{record[0]}")
-                if st.button("Delete this saved record", key=f"history_delete_{record[0]}"):
-                    delete_history_record(record[0])
-                    st.success("Saved record deleted.")
-                    st.rerun()
-    except Exception as exc:
-        st.error(f"Could not read local history: {type(exc).__name__}: {exc}")
+            st.info("The built-in parser did not confidently identify any supported lab values. The AI section may still extract additional report content.")
+
+        st.subheader("Rule-based report sections (fallback)")
+        findings_raw = extract_section(report_text, ["Findings", "Observations"])
+        impression_raw = extract_section(report_text, ["Impression", "Conclusion", "Conclusions", "Opinion", "Interpretation", "Diagnosis"])
+        recommendations_raw = extract_section(report_text, ["Recommendation", "Recommendations", "Advice", "Suggestion", "Plan"])
+        key_findings, normal_observations, recommendations = split_radiology_narrative(findings_raw, impression_raw, recommendations_raw)
+
+        st.markdown("**Findings detected by rules**")
+        if key_findings:
+            for item in key_findings:
+                st.write("• " + item)
+        elif findings_raw or impression_raw:
+            st.info("No separate main finding could be confidently separated from the extracted wording. Review the source text.")
+        else:
+            st.caption("No clear Findings or Impression heading detected.")
+
+        st.markdown("**Normal / negative observations detected by rules**")
+        if normal_observations:
+            for item in normal_observations:
+                st.write("• " + item)
+        else:
+            st.caption("No clearly worded normal or negative observations were separated.")
+
+        st.markdown("**Recommendations detected by rules**")
+        if recommendations:
+            for item in recommendations:
+                st.write("• " + item)
+        else:
+            st.caption("No separate recommendation was confidently detected.")
+
+        explainers = explain_radiology(" ".join([findings_raw, impression_raw, recommendations_raw, *key_findings, *normal_observations, *recommendations]))
+        if explainers:
+            st.markdown("**Built-in term explanations**")
+            for note in explainers:
+                st.write("• " + note)
+
+        st.warning(
+            "For understanding only—not a diagnosis or treatment plan. This app analyzes the written report text, not the actual pixels of an X-ray, CT, or MRI. "
+            "Do not delay urgent care because of an app summary. If the report says critical/urgent or you have severe or rapidly worsening symptoms, contact a qualified healthcare professional or local emergency service."
+        )
+    else:
+        st.markdown(
+            "### How to use\n"
+            "1. Upload a PDF or a scan/photo of a report.\n"
+            "2. The app extracts selectable PDF text or uses OCR for scans.\n"
+            "3. Review the extracted text for mistakes.\n"
+            "4. For AI analysis, check the privacy consent box and click **Analyze report with AI**.\n"
+            "5. Compare AI-extracted values and quotes with the original report before relying on them.\n\n"
+            "### Setup and limitations\n"
+            "- AI analysis requires an OpenAI API key and internet access; API usage is billed separately from a ChatGPT subscription.\n"
+            "- OCR for scanned files requires the Tesseract application and the Python packages `pytesseract` and `Pillow`.\n"
+            "- The built-in laboratory parser supports a limited set of test names; AI extraction is broader but not guaranteed complete or correct.\n"
+            "- The app reads the written report, not medical image pixels, and does not diagnose or recommend treatment.\n"
+            "- Avoid uploading reports unless you are comfortable sending extracted text to the configured AI provider."
+        )
+
+
+elif selected_page == "Old vs New Comparison":
+    st.title("Old vs New Report Comparison")
+    st.caption("Upload an older and a newer report to review changes side by side.")
+    compare_force_ocr = st.checkbox("Run OCR on every PDF page", value=False, key="compare_force_ocr")
+    with st.expander("Compare two reports (older vs newer)", expanded=False):
+        st.write("Compare report changes using AI. The extracted text from both reports is sent to the configured OpenAI API only after you select consent and click the comparison button.")
+        older_file = st.file_uploader("Older report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="older_compare_upload")
+        newer_file = st.file_uploader("Newer report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="newer_compare_upload")
+        compare_consent = st.checkbox("I consent to send the extracted text of both reports to OpenAI for comparison and am authorized to share them.", key="compare_consent")
+        if st.button("Compare reports with AI", disabled=not (older_file and newer_file and compare_consent and model_name.strip()), key="compare_reports_button"):
+            try:
+                with st.spinner("Extracting and comparing both reports..."):
+                    old_text = extract_uploaded_text(older_file, force_ocr=compare_force_ocr)
+                    new_text = extract_uploaded_text(newer_file, force_ocr=compare_force_ocr)
+                    compare_output, compare_truncated = compare_reports_with_ai(old_text, new_text, model_name.strip(), language_name)
+                st.session_state["medical_report_compare_output"] = compare_output
+                st.session_state["medical_report_compare_truncated"] = compare_truncated
+                st.session_state["medical_report_compare_names"] = (older_file.name, newer_file.name)
+                st.session_state["medical_report_compare_hash"] = hashlib.sha256((old_text + "\0" + new_text).encode("utf-8", errors="replace")).hexdigest()
+                st.session_state["medical_report_compare_old_text"] = old_text
+                st.session_state["medical_report_compare_new_text"] = new_text
+            except Exception as exc:
+                st.error("Report comparison could not be completed.")
+                st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+        compare_output = st.session_state.get("medical_report_compare_output", "")
+        if compare_output:
+            if st.session_state.get("medical_report_compare_truncated"):
+                st.warning("One or both reports were truncated before comparison; later content may be missing.")
+            try:
+                comparison = json.loads(compare_output)
+                st.markdown("#### Comparison summary")
+                st.write(comparison.get("overall_summary", "No summary returned."))
+                result_rows = comparison.get("results_comparison") or []
+                if result_rows:
+                    st.markdown("#### Results compared")
+                    st.dataframe([{
+                        "Parameter": x.get("parameter", ""),
+                        "Older value": str(x.get("older_value", "Not stated")) + (" " + str(x.get("older_unit", "")) if x.get("older_unit") else ""),
+                        "Newer value": str(x.get("newer_value", "Not stated")) + (" " + str(x.get("newer_unit", "")) if x.get("newer_unit") else ""),
+                        "Older reference range": x.get("older_reference_range", "Not stated"),
+                        "Newer reference range": x.get("newer_reference_range", "Not stated"),
+                        "Change described by AI": x.get("change_description", ""),
+                        "Older source quote": x.get("older_source_quote", ""),
+                        "Newer source quote": x.get("newer_source_quote", ""),
+                    } for x in result_rows if isinstance(x, dict)], use_container_width=True, hide_index=True)
+                    chart_rows = []
+                    for x in result_rows:
+                        if not isinstance(x, dict):
+                            continue
+                        vals=[]
+                        for key in ("older_value", "newer_value"):
+                            m=re.search(r"[-+]?\d[\d,]*(?:\.\d+)?", str(x.get(key, "")))
+                            vals.append(float(m.group(0).replace(",", "")) if m else None)
+                        if vals[0] is not None and vals[1] is not None and x.get("parameter"):
+                            chart_rows.append({"Parameter": str(x["parameter"]), "Older report": vals[0], "Newer report": vals[1]})
+                    if chart_rows:
+                        st.markdown("#### Numeric change overview (units may differ; verify before interpreting)")
+                        import pandas as pd
+                        chart_data = pd.DataFrame(
+                            {row["Parameter"]: [row["Older report"], row["Newer report"]] for row in chart_rows},
+                            index=["Older report", "Newer report"],
+                        )
+                        st.line_chart(chart_data)
+                        st.caption("The chart compares numeric values only. Confirm that both tests use matching units and methods before interpreting changes.")
+                finding_rows = comparison.get("findings_comparison") or []
+                if finding_rows:
+                    st.markdown("#### Narrative findings compared")
+                    for item in finding_rows:
+                        if isinstance(item, dict):
+                            st.markdown(f"**{item.get('topic', 'Finding')}**")
+                            st.write("Older: " + str(item.get("older_finding", "Not stated")))
+                            st.caption("Older source: “" + str(item.get("older_source_quote", "")) + "”")
+                            st.write("Newer: " + str(item.get("newer_finding", "Not stated")))
+                            st.caption("Newer source: “" + str(item.get("newer_source_quote", "")) + "”")
+                            st.write(item.get("change_description", ""))
+                if comparison.get("limitations"):
+                    st.markdown("#### Limitations")
+                    for item in comparison["limitations"]:
+                        st.write("• " + str(item))
+                st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
+            except (json.JSONDecodeError, TypeError):
+                st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
+                st.text(compare_output)
+
+elif selected_page == "Report History":
+    st.title("Report History")
+    st.caption("Saved analyses are stored locally on this computer.")
+    with st.expander("Local report history (stored on this computer)", expanded=False):
+        st.warning("History contains sensitive report text and AI output. It is stored in a local SQLite file next to this app. Use only on a trusted computer; delete records when no longer needed.")
+        try:
+            history_rows = read_history()
+            if not history_rows:
+                st.info("No saved analyses yet. Analyze a report, then click 'Save this analysis to local history'.")
+            else:
+                options = {f"#{r[0]} · {r[1]} · {r[2]} · {r[3]}": r[0] for r in history_rows}
+                selected_label = st.selectbox("Saved analysis", list(options.keys()), key="history_record_select")
+                record = get_history_record(options[selected_label])
+                if record:
+                    st.markdown(f"**File:** {record[2]}  ·  **Saved:** {record[1]}  ·  **Language:** {record[3]}")
+                    try:
+                        saved_json = json.loads(record[5])
+                        st.write(saved_json.get("plain_language_summary", "No summary stored."))
+                        saved_labs = saved_json.get("laboratory_results") or []
+                        if saved_labs:
+                            st.dataframe([{
+                                "Parameter": x.get("parameter", ""), "Value": x.get("value", ""), "Unit": x.get("unit", ""),
+                                "Reference range": x.get("reference_range", ""), "Status as reported": x.get("status_as_reported", ""),
+                                "Range-based check": classify_numeric_range(x.get("value", ""), x.get("reference_range", ""))
+                            } for x in saved_labs if isinstance(x, dict)], use_container_width=True, hide_index=True)
+                    except Exception:
+                        st.text(record[5])
+                    st.download_button("Download saved AI analysis (JSON)", data=record[5], file_name=f"saved_analysis_{record[0]}.json", mime="application/json", key=f"history_download_{record[0]}")
+                    if st.button("Delete this saved record", key=f"history_delete_{record[0]}"):
+                        delete_history_record(record[0])
+                        st.success("Saved record deleted.")
+                        st.rerun()
+        except Exception as exc:
+            st.error(f"Could not read local history: {type(exc).__name__}: {exc}")
