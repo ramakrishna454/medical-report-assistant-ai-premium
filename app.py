@@ -26,7 +26,18 @@ st.markdown("""
 .block-container { max-width: 1440px; padding-top: 1.7rem; padding-bottom: 3rem; }
 h1 { color: var(--mr-ink); letter-spacing: -.035em; font-weight: 800 !important; }
 h2, h3 { color: var(--mr-ink); letter-spacing: -.02em; }
-p, li, label { color: #334155; }
+p, li, label, [data-testid="stMarkdownContainer"], [data-testid="stMarkdownContainer"] p,
+[data-testid="stMarkdownContainer"] li, [data-testid="stMarkdownContainer"] span,
+[data-testid="stText"], [data-testid="stCaptionContainer"] { color: #263548 !important; }
+[data-testid="stExpander"] summary, [data-testid="stExpander"] summary p { color: #152238 !important; }
+[data-baseweb="input"] input, [data-baseweb="textarea"] textarea,
+[data-baseweb="select"] input { color: #172033 !important; -webkit-text-fill-color: #172033 !important; }
+[data-baseweb="select"] [role="combobox"] { color: #172033 !important; }
+[data-testid="stFileUploader"] *, [data-testid="stAlert"] * { color: #263548; }
+.stButton > button, .stDownloadButton > button { color: #152238 !important; }
+.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] { color: #ffffff !important; }
+[data-testid="stTabs"] button { color: #263548 !important; }
+[data-testid="stMetricLabel"] *, [data-testid="stMetricValue"] * { color: #152238 !important; }
 [data-testid="stSidebar"] {
   background: linear-gradient(180deg, #102a43 0%, #173f50 100%);
 }
@@ -763,7 +774,7 @@ def delete_history_record(record_id):
 
 
 def render_voice_assistant(summary, key_findings=None, language="English"):
-    """Use the browser's built-in speech synthesis; no separate TTS service or API key."""
+    """Read a concise report summary with browser speech synthesis."""
     language_codes = {"English": "en-IN", "Hindi": "hi-IN", "Telugu": "te-IN"}
     language_code = language_codes.get(language, "en-IN")
     parts = ["Report summary.", str(summary or "").strip()]
@@ -776,60 +787,77 @@ def render_voice_assistant(summary, key_findings=None, language="English"):
         if clean_findings:
             parts.append("Key findings.")
             parts.extend(clean_findings[:5])
-    speech_text = " ".join(part for part in parts if part)[:3500]
-    # JSON encoding prevents report text from breaking out of the JavaScript string.
+    speech_text = " ".join(part for part in parts if part).strip()[:3000]
     speech_json = json.dumps(speech_text, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     lang_json = json.dumps(language_code)
     html = f"""
-    <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #dbe5ef;border-radius:14px;padding:14px 16px;background:#f8fbfd;color:#152238;">
-      <div style="font-size:1rem;font-weight:700;margin-bottom:5px;">🔊 Listen to My Report</div>
-      <div style="font-size:.88rem;color:#526477;margin-bottom:12px;">Hear a short summary and the main findings. Voice availability depends on your browser and device.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="play" style="background:#0f766e;color:white;border:0;border-radius:9px;padding:9px 14px;font-weight:650;cursor:pointer;">▶ Listen</button>
-        <button id="pause" style="background:white;color:#152238;border:1px solid #cbd5e1;border-radius:9px;padding:9px 14px;cursor:pointer;">⏸ Pause</button>
-        <button id="stop" style="background:white;color:#152238;border:1px solid #cbd5e1;border-radius:9px;padding:9px 14px;cursor:pointer;">■ Stop</button>
+    <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #cbd5e1;border-radius:14px;padding:16px;background:#ffffff;color:#152238;">
+      <div style="font-size:1rem;font-weight:750;margin-bottom:5px;color:#152238;">🔊 Listen to My Report</div>
+      <div style="font-size:.9rem;color:#40536a;margin-bottom:12px;">Listen to the short summary and main findings.</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;">
+        <button id="mr-play" style="background:#087f73;color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;">▶ Listen</button>
+        <button id="mr-pause" style="background:#fff;color:#152238;border:1px solid #94a3b8;border-radius:9px;padding:10px 16px;cursor:pointer;">Ⅱ Pause / Resume</button>
+        <button id="mr-stop" style="background:#fff;color:#152238;border:1px solid #94a3b8;border-radius:9px;padding:10px 16px;cursor:pointer;">■ Stop</button>
       </div>
-      <div id="status" aria-live="polite" style="font-size:.82rem;color:#526477;margin-top:9px;">Ready to read the summary aloud.</div>
+      <div id="mr-status" role="status" aria-live="polite" style="font-size:.85rem;color:#40536a;margin-top:11px;">Ready. Press Listen to hear the report.</div>
     </div>
     <script>
-      const reportText = {speech_json};
-      const speechLanguage = {lang_json};
-      const statusEl = document.getElementById("status");
-      function supported() {{
-        return ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
-      }}
-      document.getElementById("play").addEventListener("click", () => {{
-        if (!supported()) {{
-          statusEl.textContent = "Speech playback is not supported by this browser. Try a recent version of Chrome or Edge.";
-          return;
-        }}
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(reportText);
-        utterance.lang = speechLanguage;
-        utterance.rate = 0.92;
-        utterance.onstart = () => statusEl.textContent = "Reading aloud…";
-        utterance.onend = () => statusEl.textContent = "Finished reading.";
-        utterance.onerror = (event) => statusEl.textContent = "Playback could not start. Check your device's available voices (" + event.error + ").";
-        window.speechSynthesis.speak(utterance);
-      }});
-      document.getElementById("pause").addEventListener("click", () => {{
-        if (supported() && window.speechSynthesis.speaking) {{
-          if (window.speechSynthesis.paused) {{
-            window.speechSynthesis.resume();
-            statusEl.textContent = "Reading aloud…";
-          }} else {{
-            window.speechSynthesis.pause();
-            statusEl.textContent = "Paused.";
+      (() => {{
+        const textToRead = {speech_json};
+        const wantedLang = {lang_json};
+        const status = document.getElementById('mr-status');
+        const play = document.getElementById('mr-play');
+        const pause = document.getElementById('mr-pause');
+        const stop = document.getElementById('mr-stop');
+        let utterance = null;
+        function sayStatus(message) {{ status.textContent = message; }}
+        function startSpeech() {{
+          if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {{
+            sayStatus('Voice is not supported in this browser. Please try Google Chrome or Microsoft Edge.');
+            return;
           }}
+          window.speechSynthesis.cancel();
+          utterance = new SpeechSynthesisUtterance(textToRead);
+          utterance.lang = wantedLang;
+          utterance.rate = 0.9;
+          utterance.pitch = 1;
+          utterance.onstart = () => sayStatus('Reading your report aloud…');
+          utterance.onend = () => sayStatus('Finished reading the report.');
+          utterance.onerror = (event) => sayStatus('Could not play voice (' + event.error + '). Check that your device is not muted, then try again.');
+          // Wait briefly for the browser to populate its installed voice list.
+          const voices = window.speechSynthesis.getVoices();
+          const matching = voices.find(v => v.lang && v.lang.toLowerCase() === wantedLang.toLowerCase())
+            || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(wantedLang.slice(0,2).toLowerCase()));
+          if (matching) utterance.voice = matching;
+          window.speechSynthesis.speak(utterance);
+          setTimeout(() => {{
+            if (window.speechSynthesis.pending && !window.speechSynthesis.speaking) {{
+              window.speechSynthesis.cancel();
+              sayStatus('Your browser did not start voice playback. Try Chrome/Edge and check your device audio settings.');
+            }}
+          }}, 2500);
         }}
-      }});
-      document.getElementById("stop").addEventListener("click", () => {{
-        if (supported()) window.speechSynthesis.cancel();
-        statusEl.textContent = "Stopped.";
-      }});
+        play.addEventListener('click', startSpeech);
+        pause.addEventListener('click', () => {{
+          if (!('speechSynthesis' in window)) return;
+          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {{
+            window.speechSynthesis.pause(); sayStatus('Paused. Press Pause / Resume to continue.');
+          }} else if (window.speechSynthesis.paused) {{
+            window.speechSynthesis.resume(); sayStatus('Continuing playback…');
+          }} else {{ sayStatus('Press Listen to start playback.'); }}
+        }});
+        stop.addEventListener('click', () => {{
+          if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+          sayStatus('Playback stopped.');
+        }});
+        if ('speechSynthesis' in window) {{
+          window.speechSynthesis.getVoices();
+          window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+        }}
+      }})();
     </script>
     """
-    components.html(html, height=190, scrolling=False)
+    components.html(html, height=205, scrolling=False)
 
 
 def render_ai_analysis(raw_output, was_truncated=False):
@@ -847,7 +875,7 @@ def render_ai_analysis(raw_output, was_truncated=False):
     st.markdown("#### Plain-language summary")
     summary_text = data.get("plain_language_summary") or "No summary returned."
     st.write(summary_text)
-    render_voice_assistant(summary_text, data.get("key_findings") or [], st.session_state.get("medical_report_ai_language", UI_LANGUAGE))
+    render_voice_assistant(summary_text, data.get("key_findings") or [], UI_LANGUAGE)
 
     def render_quoted_items(title, key, field):
         items = data.get(key) or []
