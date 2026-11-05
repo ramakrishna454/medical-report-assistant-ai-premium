@@ -117,11 +117,12 @@ button:disabled { opacity:.55 !important; }
 with st.sidebar:
     st.subheader("Navigation")
     selected_page = st.radio(
-    "Choose a section",
-    ["Home", "Upload & OCR", "Old vs New Comparison", "Report History"],
-    key="main_navigation_top_v2",
-    label_visibility="collapsed",
-).divider()
+        "Choose a section",
+        ["Home", "Upload & OCR", "Old vs New Comparison", "Report History"],
+        key="main_navigation",
+        label_visibility="collapsed",
+    )
+    st.divider()
 
 # The app language controls both the visible interface and the language requested for AI explanations.
 _APP_LANG_OPTIONS = {
