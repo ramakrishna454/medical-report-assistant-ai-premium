@@ -109,6 +109,141 @@ button:disabled { opacity:.55 !important; }
  h1 { font-size:1.75rem !important; }
  h2 { font-size:1.35rem !important; }
 }
+
+/* Premium visual refresh — CSS only; application logic remains unchanged */
+:root {
+    --mra-bg: #071321;
+    --mra-panel: #0d2032;
+    --mra-panel-soft: #10283d;
+    --mra-border: rgba(148, 190, 213, .16);
+    --mra-text: #eaf4fb;
+    --mra-muted: #9bb2c4;
+    --mra-teal: #28c6b5;
+    --mra-blue: #55a8ff;
+}
+html, body, [data-testid="stAppViewContainer"] {
+    background:
+      radial-gradient(ellipse at 12% 0%, rgba(32, 133, 151, .16), transparent 34%),
+      radial-gradient(ellipse at 90% 8%, rgba(52, 112, 190, .13), transparent 30%),
+      var(--mra-bg) !important;
+    color: var(--mra-text);
+}
+[data-testid="stHeader"] { background: rgba(7, 19, 33, .72) !important; }
+[data-testid="stMain"] > div { padding-top: 1.35rem; }
+.block-container {
+    max-width: 1240px !important;
+    padding-left: clamp(1rem, 3vw, 2.6rem) !important;
+    padding-right: clamp(1rem, 3vw, 2.6rem) !important;
+    padding-bottom: 3rem !important;
+}
+h1, h2, h3, h4 {
+    color: #f3f9ff !important;
+    letter-spacing: -.025em;
+    font-weight: 700 !important;
+}
+h1 { line-height: 1.12 !important; }
+p, li, label, [data-testid="stMarkdownContainer"] {
+    color: inherit;
+}
+small, .stCaption, [data-testid="stCaptionContainer"] {
+    color: var(--mra-muted) !important;
+}
+[data-testid="stVerticalBlockBorderWrapper"],
+[data-testid="stExpander"],
+[data-testid="stForm"],
+[data-testid="stFileUploader"],
+[data-testid="stMetric"],
+div[data-testid="stDataFrame"],
+div[data-testid="stTable"] {
+    border: 1px solid var(--mra-border) !important;
+    border-radius: 16px !important;
+    background: linear-gradient(145deg, rgba(16, 40, 61, .92), rgba(10, 29, 46, .92)) !important;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, .14);
+}
+[data-testid="stVerticalBlockBorderWrapper"] { padding: .35rem; }
+[data-testid="stMetric"] { padding: 16px 18px !important; }
+[data-testid="stMetricLabel"] { color: var(--mra-muted) !important; }
+[data-testid="stMetricValue"] { color: #f4fbff !important; font-weight: 750 !important; }
+[data-testid="stFileUploader"] {
+    border: 1px dashed rgba(40, 198, 181, .48) !important;
+    background: rgba(13, 39, 55, .72) !important;
+}
+[data-testid="stFileUploader"]:hover {
+    border-color: var(--mra-teal) !important;
+    background: rgba(18, 55, 69, .82) !important;
+}
+.stButton > button, .stDownloadButton > button, [data-testid="stFormSubmitButton"] button {
+    border: 1px solid rgba(40, 198, 181, .38) !important;
+    border-radius: 11px !important;
+    min-height: 2.65rem;
+    padding: .55rem 1.05rem !important;
+    color: #f5fffe !important;
+    font-weight: 650 !important;
+    background: linear-gradient(105deg, #087f83, #126c9b) !important;
+    box-shadow: 0 7px 18px rgba(5, 115, 128, .18);
+    transition: transform .16s ease, filter .16s ease, box-shadow .16s ease;
+}
+.stButton > button:hover, .stDownloadButton > button:hover,
+[data-testid="stFormSubmitButton"] button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.12);
+    box-shadow: 0 10px 24px rgba(5, 145, 151, .24);
+}
+.stButton > button:focus, .stDownloadButton > button:focus {
+    outline: 2px solid rgba(40, 198, 181, .7) !important;
+    outline-offset: 2px;
+}
+input, textarea, [data-baseweb="select"] > div {
+    border-radius: 10px !important;
+}
+[data-baseweb="select"] > div, [data-testid="stTextInput"] input,
+[data-testid="stTextArea"] textarea, [data-testid="stNumberInput"] input {
+    background: #0a1b2b !important;
+    border-color: var(--mra-border) !important;
+    color: var(--mra-text) !important;
+}
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #091a2a, #071522) !important;
+    border-right: 1px solid var(--mra-border);
+}
+[data-testid="stSidebar"] > div { padding-top: 1.2rem; }
+[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] { color: #d8e8f3; }
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+    gap: 8px;
+    border-bottom: 1px solid var(--mra-border);
+}
+[data-testid="stTabs"] button[role="tab"] {
+    border-radius: 10px 10px 0 0;
+    padding: .65rem 1rem;
+    color: var(--mra-muted);
+}
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #8ff3e6 !important;
+    border-bottom: 2px solid var(--mra-teal) !important;
+}
+[data-testid="stExpander"] summary { color: var(--mra-text) !important; }
+[data-testid="stAlert"] {
+    border-radius: 12px !important;
+    border: 1px solid var(--mra-border) !important;
+}
+hr { border-color: var(--mra-border) !important; }
+[data-testid="stDataFrame"] iframe { border-radius: 12px; }
+table { border-collapse: separate !important; border-spacing: 0; }
+thead tr th {
+    background: #12334a !important;
+    color: #eaf8ff !important;
+}
+tbody tr:nth-child(even) { background: rgba(255,255,255,.025); }
+code { color: #8ce8dc !important; }
+a { color: #72dcd1 !important; }
+@media (max-width: 760px) {
+    .block-container { padding-left: 1rem !important; padding-right: 1rem !important; }
+    h1 { font-size: 1.8rem !important; }
+    h2 { font-size: 1.4rem !important; }
+    [data-testid="stMetric"] { padding: 12px !important; }
+    .stButton > button, .stDownloadButton > button { width: 100%; }
+}
+
 </style>
 
 """, unsafe_allow_html=True)
@@ -1131,72 +1266,6 @@ def render_ai_analysis(raw_output, was_truncated=False):
     return data
 
 
-def render_comparison_voice_assistant(comparison, language="English"):
-    """Read the older/newer comparison summary, values, and narrative changes aloud."""
-    if not isinstance(comparison, dict):
-        comparison = {}
-
-    speech_data = {
-        "report_type": "Older and newer medical report comparison",
-        "plain_language_summary": comparison.get("overall_summary", ""),
-        "key_findings": [],
-        "laboratory_results": [],
-        "normal_or_negative_findings": [],
-        "recommendations_written_in_report": [],
-        "terms_explained": [],
-        "questions_to_ask_clinician": [],
-        "uncertainties_or_missing_context": comparison.get("limitations") or [],
-        "urgent_language_in_report": [],
-    }
-
-    for item in comparison.get("results_comparison") or []:
-        if not isinstance(item, dict):
-            continue
-        parameter = str(item.get("parameter", "") or "Result").strip()
-        older = " ".join(str(item.get(k, "") or "").strip() for k in ("older_value", "older_unit")).strip()
-        newer = " ".join(str(item.get(k, "") or "").strip() for k in ("newer_value", "newer_unit")).strip()
-        description = (
-            f"{parameter}. Older report: {older or 'Not stated'}. "
-            f"Newer report: {newer or 'Not stated'}. "
-            f"{str(item.get('change_description', '') or '').strip()}"
-        ).strip()
-        quotes = " ".join(
-            q for q in (
-                str(item.get("older_source_quote", "") or "").strip(),
-                str(item.get("newer_source_quote", "") or "").strip(),
-            ) if q
-        )
-        speech_data["key_findings"].append({
-            "finding": description,
-            "source_quote": quotes,
-        })
-
-    for item in comparison.get("findings_comparison") or []:
-        if not isinstance(item, dict):
-            continue
-        topic = str(item.get("topic", "") or "Finding").strip()
-        older = str(item.get("older_finding", "") or "Not stated").strip()
-        newer = str(item.get("newer_finding", "") or "Not stated").strip()
-        change = str(item.get("change_description", "") or "").strip()
-        description = (
-            f"{topic}. Older report: {older}. Newer report: {newer}. {change}"
-        ).strip()
-        quotes = " ".join(
-            q for q in (
-                str(item.get("older_source_quote", "") or "").strip(),
-                str(item.get("newer_source_quote", "") or "").strip(),
-            ) if q
-        )
-        speech_data["normal_or_negative_findings"].append({
-            "finding": description,
-            "source_quote": quotes,
-        })
-
-    st.markdown("#### 🔊 Voice Assistant — Listen to Older vs Newer Comparison")
-    st.caption("Listen to the comparison summary, extracted value changes, narrative findings, and limitations.")
-    render_voice_assistant(speech_data, language=language)
-
-
 def render_report_comparison_section():
     st.subheader("Old vs New Report Comparison")
     st.caption("Compare an older report with a newer one. The comparison section is shown at the top of the report page.")
@@ -1277,7 +1346,6 @@ def render_report_comparison_section():
                     for item in comparison["limitations"]:
                         st.write("• " + str(item))
                 st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
-                render_comparison_voice_assistant(comparison, language=language_name)
             except (json.JSONDecodeError, TypeError):
                 st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
                 st.text(compare_output)
