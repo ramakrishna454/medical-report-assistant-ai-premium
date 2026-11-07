@@ -17,54 +17,112 @@ st.set_page_config(page_title="AI Medical Report Assistant", page_icon="🩺", l
 # Premium visual refresh: layout and component styling only; app logic remains unchanged.
 st.markdown("""
 <style>
-:root { --mr-ink:#152238; --mr-muted:#64748b; --mr-teal:#0f766e; --mr-line:#dbe5ef; }
-[data-testid="stAppViewContainer"] {
-  background: radial-gradient(ellipse at 8% 0%, rgba(13,148,136,.09), transparent 34%),
-              linear-gradient(180deg, #f7fafc 0%, #eef4f8 100%);
+:root {
+  color-scheme: dark;
+  --mr-bg:#080d18;
+  --mr-bg-2:#0d1524;
+  --mr-panel:#111d2e;
+  --mr-panel-2:#162438;
+  --mr-line:#263a52;
+  --mr-ink:#e8f0fa;
+  --mr-muted:#9db0c7;
+  --mr-accent:#36d6c5;
+  --mr-accent-2:#13a99c;
+  --mr-shadow:0 12px 32px rgba(0,0,0,.24);
 }
-[data-testid="stHeader"] { background: rgba(247,250,252,.82); }
-.block-container { max-width: 1440px; padding-top: 1.7rem; padding-bottom: 3rem; }
-h1 { color: var(--mr-ink); letter-spacing: -.035em; font-weight: 800 !important; }
-h2, h3 { color: var(--mr-ink); letter-spacing: -.02em; }
-p, li, label { color: #334155; }
-[data-testid="stSidebar"] {
-  background: linear-gradient(180deg, #102a43 0%, #173f50 100%);
+html, body, [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+  background:var(--mr-bg) !important; color:var(--mr-ink) !important;
 }
-[data-testid="stSidebar"] * { color: #f1f5f9; }
-[data-testid="stSidebar"] [data-baseweb="select"] * { color: #172033; }
-[data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #e2e8f0; }
-[data-testid="stFileUploader"], [data-testid="stVerticalBlockBorderWrapper"],
-div[data-testid="stExpander"], [data-testid="stAlert"] {
-  border-radius: 16px;
+[data-testid="stHeader"] { background:rgba(8,13,24,.94) !important; }
+[data-testid="stToolbar"] { right:1rem; }
+.block-container { max-width:1460px; padding-top:1.6rem; padding-bottom:3.5rem; }
+/* Main typography */
+h1,h2,h3,h4,h5,h6 { color:#f3f8ff !important; font-weight:760 !important; letter-spacing:-.025em; }
+h1 { font-size:2.25rem !important; line-height:1.2 !important; }
+h2 { font-size:1.55rem !important; margin-top:1.2rem !important; }
+h3 { font-size:1.18rem !important; }
+p,li,label,span,small,strong,[data-testid="stMarkdownContainer"],
+[data-testid="stMarkdownContainer"] p,[data-testid="stMarkdownContainer"] li,
+[data-testid="stText"],[data-testid="stCaptionContainer"] { color:var(--mr-ink) !important; opacity:1 !important; }
+[data-testid="stCaptionContainer"] p,.stCaption { color:var(--mr-muted) !important; }
+/* Sidebar and navigation */
+[data-testid="stSidebar"] { background:#0b1422 !important; border-right:1px solid var(--mr-line); }
+[data-testid="stSidebar"] > div:first-child { padding-top:1rem; }
+[data-testid="stSidebar"] * { color:var(--mr-ink) !important; opacity:1 !important; }
+[data-testid="stSidebar"] h2,[data-testid="stSidebar"] h3 { color:#f3f8ff !important; font-size:1.08rem !important; }
+[data-testid="stSidebar"] [role="radiogroup"] { gap:.42rem; }
+[data-testid="stSidebar"] [role="radiogroup"] label {
+  background:#111f31; border:1px solid #263b53; border-radius:12px;
+  padding:.62rem .75rem; transition:all .16s ease; width:100%;
 }
-[data-testid="stFileUploader"] {
-  background: rgba(255,255,255,.78); border: 1px dashed #9fb8c9; padding: 1rem;
+[data-testid="stSidebar"] [role="radiogroup"] label:hover { border-color:var(--mr-accent); background:#172b40; }
+[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) { background:#123b40; border-color:var(--mr-accent); }
+/* Inputs and select boxes */
+[data-baseweb="input"] input,[data-baseweb="textarea"] textarea,
+[data-baseweb="select"] input,[data-baseweb="select"] [role="combobox"] {
+ color:var(--mr-ink) !important; -webkit-text-fill-color:var(--mr-ink) !important;
+ background:#0d1929 !important; border-radius:10px !important;
 }
-[data-testid="stVerticalBlockBorderWrapper"] {
-  background: rgba(255,255,255,.86); border: 1px solid var(--mr-line);
-  box-shadow: 0 8px 26px rgba(15, 23, 42, .045);
+[data-baseweb="input"] > div,[data-baseweb="textarea"] > div,
+[data-baseweb="select"] > div { background:#0d1929 !important; border:1px solid #30465f !important; border-radius:10px !important; }
+[data-baseweb="input"] > div:focus-within,[data-baseweb="textarea"] > div:focus-within,
+[data-baseweb="select"] > div:focus-within { border-color:var(--mr-accent) !important; box-shadow:0 0 0 2px rgba(54,214,197,.15) !important; }
+[data-baseweb="popover"],[data-baseweb="menu"],[role="listbox"] { background:#142238 !important; border:1px solid var(--mr-line) !important; }
+[role="option"] { background:#142238 !important; color:var(--mr-ink) !important; }
+[role="option"]:hover { background:#1d354c !important; }
+/* Buttons */
+.stButton > button,.stDownloadButton > button {
+ color:var(--mr-ink) !important; background:#17263a !important; border:1px solid #38516b !important;
+ border-radius:11px !important; font-weight:680 !important; min-height:2.7rem;
+ transition:all .16s ease;
 }
-div[data-testid="stMetric"] {
-  background: #fff; border: 1px solid var(--mr-line); border-radius: 14px;
-  padding: 14px 16px; box-shadow: 0 5px 18px rgba(15,23,42,.04);
+.stButton > button[kind="primary"],.stDownloadButton > button[kind="primary"] {
+ color:#041817 !important; background:var(--mr-accent) !important; border:1px solid var(--mr-accent) !important;
 }
-div[data-testid="stMetricLabel"] { color: var(--mr-muted); }
-div[data-testid="stMetricValue"] { color: var(--mr-ink); font-weight: 750; }
-.stButton > button, .stDownloadButton > button {
-  border-radius: 11px; font-weight: 650; min-height: 2.65rem;
-  border: 1px solid #cbd5e1; transition: all .15s ease;
+.stButton > button:hover,.stDownloadButton > button:hover { border-color:var(--mr-accent) !important; box-shadow:0 5px 18px rgba(54,214,197,.14); transform:translateY(-1px); }
+.stButton > button[kind="primary"]:hover,.stDownloadButton > button[kind="primary"]:hover { background:#59e5d6 !important; }
+/* Cards, metrics, uploaders, expanders */
+[data-testid="stVerticalBlockBorderWrapper"],div[data-testid="stExpander"],
+[data-testid="stAlert"],div[data-testid="stMetric"] { border-radius:15px !important; }
+[data-testid="stVerticalBlockBorderWrapper"] { background:var(--mr-panel) !important; border:1px solid var(--mr-line) !important; box-shadow:var(--mr-shadow); }
+div[data-testid="stMetric"] { background:linear-gradient(145deg,#14243a,#101c2d) !important; border:1px solid #2b4058; padding:15px 16px; box-shadow:var(--mr-shadow); }
+div[data-testid="stMetricLabel"],div[data-testid="stMetricValue"] { color:var(--mr-ink) !important; }
+[data-testid="stFileUploader"] { background:#101d2e !important; border:1.5px dashed #3b6677 !important; border-radius:15px !important; padding:1rem !important; }
+[data-testid="stFileUploader"] *,[data-testid="stAlert"] * { color:var(--mr-ink) !important; opacity:1 !important; }
+[data-testid="stFileUploaderDropzone"] { background:#132238 !important; border:1px dashed #3b6677 !important; }
+div[data-testid="stExpander"] { background:#111e30 !important; border:1px solid var(--mr-line) !important; }
+[data-testid="stExpander"] summary,[data-testid="stExpander"] summary p { color:var(--mr-ink) !important; font-weight:680; }
+[data-testid="stTabs"] button { color:var(--mr-muted) !important; font-weight:650; }
+[data-testid="stTabs"] button[aria-selected="true"] { color:var(--mr-accent) !important; }
+/* Tables, code, alerts and separators */
+[data-testid="stDataFrame"], [data-testid="stTable"] { border:1px solid var(--mr-line) !important; border-radius:12px; overflow:hidden; }
+[data-testid="stDataFrame"] * { color:var(--mr-ink) !important; }
+pre,code { background:#0a1422 !important; color:#b8f3e9 !important; border:1px solid #263a52 !important; border-radius:8px; }
+[data-testid="stAlert"] { background:#142238 !important; border:1px solid #304760 !important; }
+hr { border-color:var(--mr-line) !important; margin:1.35rem 0 !important; }
+a { color:var(--mr-accent) !important; }
+:focus-visible { outline:2px solid var(--mr-accent) !important; outline-offset:2px !important; }
+/* Keep disabled controls legible */
+button:disabled { opacity:.55 !important; }
+@media (max-width:760px) {
+ .block-container { padding:1rem 1rem 2rem; }
+ h1 { font-size:1.75rem !important; }
+ h2 { font-size:1.35rem !important; }
 }
-.stButton > button[kind="primary"], .stDownloadButton > button[kind="primary"] {
-  background: linear-gradient(135deg, #0f766e, #0e7490); color: white; border: 0;
-}
-.stButton > button:hover, .stDownloadButton > button:hover {
-  transform: translateY(-1px); box-shadow: 0 7px 18px rgba(15,118,110,.16);
-}
-[data-testid="stTabs"] button { font-weight: 650; }
-hr { border-color: #dbe5ef; }
-[data-testid="stCaptionContainer"] { color: #64748b; }
 </style>
+
 """, unsafe_allow_html=True)
+
+# Keep navigation at the very top of the sidebar, before settings and descriptions.
+with st.sidebar:
+    st.subheader("Navigation")
+    selected_page = st.radio(
+        "Choose a section",
+        ["Home", "Upload & OCR", "Old vs New Comparison", "Report History"],
+        key="main_navigation",
+        label_visibility="collapsed",
+    )
+    st.divider()
 
 # The app language controls both the visible interface and the language requested for AI explanations.
 _APP_LANG_OPTIONS = {
@@ -762,178 +820,227 @@ def delete_history_record(record_id):
 
 
 
-def render_voice_assistant(summary, key_findings=None, language="English"):
-    """Use the browser's built-in speech synthesis; no separate TTS service or API key."""
-    language_codes = {"English": "en-IN", "Hindi": "hi-IN", "Telugu": "te-IN"}
-    language_code = language_codes.get(language, "en-IN")
-    parts = ["Report summary.", str(summary or "").strip()]
-    if key_findings:
-        clean_findings = [
-            str(item.get("finding", "")).strip()
-            for item in key_findings
-            if isinstance(item, dict) and str(item.get("finding", "")).strip()
-        ]
-        if clean_findings:
-            parts.append("Key findings.")
-            parts.extend(clean_findings[:5])
-    speech_text = " ".join(part for part in parts if part)[:3500]
-    # JSON encoding prevents report text from breaking out of the JavaScript string.
+def render_voice_assistant(data, language="English"):
+    """Read all structured AI-extracted report information using browser speech."""
+    if not isinstance(data, dict):
+        data = {}
+
+    sections = []
+
+    def add_section(title, content):
+        content = str(content or "").strip()
+        if content:
+            sections.append(f"{title}. {content}")
+
+    add_section("Report type", data.get("report_type"))
+    add_section("Report summary", data.get("plain_language_summary"))
+
+    def add_items(title, key, field):
+        items = data.get(key) or []
+        values = []
+        for item in items:
+            if isinstance(item, dict):
+                value = str(item.get(field, "") or "").strip()
+                quote = str(item.get("source_quote", "") or "").strip()
+                if value:
+                    values.append(value + (f". The report wording is: {quote}" if quote else ""))
+            elif str(item).strip():
+                values.append(str(item).strip())
+        if values:
+            add_section(title, " ".join(values))
+
+    add_items("Key findings", "key_findings", "finding")
+    add_items("Normal or negative findings", "normal_or_negative_findings", "finding")
+
+    labs = data.get("laboratory_results") or []
+    lab_descriptions = []
+    for item in labs:
+        if not isinstance(item, dict):
+            continue
+        parts = []
+        parameter = str(item.get("parameter", "") or "").strip()
+        value = str(item.get("value", "") or "").strip()
+        unit = str(item.get("unit", "") or "").strip()
+        reference = str(item.get("reference_range", "") or "").strip()
+        status = str(item.get("status_as_reported", "") or "").strip()
+        explanation = str(item.get("plain_language_explanation", "") or "").strip()
+        quote = str(item.get("source_quote", "") or "").strip()
+        if parameter:
+            parts.append(parameter)
+        if value:
+            parts.append(f"value {value}")
+        if unit and unit.lower() not in {"not stated", "not detected"}:
+            parts.append(unit)
+        if reference and reference.lower() not in {"not stated", "not detected"}:
+            parts.append(f"reference range {reference}")
+        if status and status.lower() != "not stated":
+            parts.append(f"status stated in report: {status}")
+        description = ", ".join(parts)
+        if explanation:
+            description += f". Explanation: {explanation}"
+        if quote:
+            description += f". Source wording: {quote}"
+        if description:
+            lab_descriptions.append(description)
+    if lab_descriptions:
+        add_section("Laboratory results, including values, units, reference ranges and explanations",
+                    " ".join(lab_descriptions))
+
+    add_items("Recommendations written in the report", "recommendations_written_in_report", "recommendation")
+
+    terms = data.get("terms_explained") or []
+    term_descriptions = []
+    for item in terms:
+        if isinstance(item, dict):
+            term = str(item.get("term", "") or "").strip()
+            explanation = str(item.get("explanation", "") or "").strip()
+            quote = str(item.get("source_quote", "") or "").strip()
+            if term or explanation:
+                text = f"{term}. {explanation}".strip()
+                if quote:
+                    text += f". The term appears in this report wording: {quote}"
+                term_descriptions.append(text)
+    if term_descriptions:
+        add_section("Medical terms explained", " ".join(term_descriptions))
+
+    for title, key in [
+        ("Questions to discuss with your clinician", "questions_to_ask_clinician"),
+        ("Uncertainties and missing context", "uncertainties_or_missing_context"),
+    ]:
+        values = [str(x).strip() for x in (data.get(key) or []) if str(x).strip()]
+        if values:
+            add_section(title, " ".join(values))
+
+    urgent = data.get("urgent_language_in_report") or []
+    urgent_descriptions = []
+    for item in urgent:
+        if isinstance(item, dict):
+            wording = str(item.get("text", "") or "").strip()
+            explanation = str(item.get("why_it_may_need_prompt_attention", "") or "").strip()
+            if wording or explanation:
+                urgent_descriptions.append(f"Report wording: {wording}. Explanation: {explanation}")
+    if urgent_descriptions:
+        add_section("Urgent or critical wording explicitly present in the report",
+                    " ".join(urgent_descriptions))
+
+    speech_text = " ".join(sections).strip()
+    if not speech_text:
+        speech_text = "No report explanation is available to read yet. Please analyze the report first."
+
     speech_json = json.dumps(speech_text, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
-    lang_json = json.dumps(language_code)
+    lang_json = json.dumps({"English": "en-IN", "Hindi": "hi-IN", "Telugu": "te-IN"}.get(language, "en-IN"))
+    language_label = {"English": "English", "Hindi": "Hindi", "Telugu": "Telugu"}.get(language, "English")
+    label_json = json.dumps(language_label)
+
     html = f"""
-    <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #dbe5ef;border-radius:14px;padding:14px 16px;background:#f8fbfd;color:#152238;">
-      <div style="font-size:1rem;font-weight:700;margin-bottom:5px;">🔊 Listen to My Report</div>
-      <div style="font-size:.88rem;color:#526477;margin-bottom:12px;">Hear a short summary and the main findings. Voice availability depends on your browser and device.</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button id="play" style="background:#0f766e;color:white;border:0;border-radius:9px;padding:9px 14px;font-weight:650;cursor:pointer;">▶ Listen</button>
-        <button id="pause" style="background:white;color:#152238;border:1px solid #cbd5e1;border-radius:9px;padding:9px 14px;cursor:pointer;">⏸ Pause</button>
-        <button id="stop" style="background:white;color:#152238;border:1px solid #cbd5e1;border-radius:9px;padding:9px 14px;cursor:pointer;">■ Stop</button>
+    <div style="font-family:system-ui,-apple-system,Segoe UI,sans-serif;border:1px solid #cbd5e1;border-radius:14px;padding:16px;background:#ffffff;color:#172033;">
+      <div style="font-size:1rem;font-weight:750;margin-bottom:5px;color:#172033;">🔊 Listen to My Full Report</div>
+      <div style="font-size:.9rem;color:#334155;margin-bottom:12px;">Listen to the extracted report details and AI explanations in the selected language.</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;">
+        <button id="mr-play" style="background:#0f766e;color:#fff;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer;">▶ Listen to Full Report</button>
+        <button id="mr-pause" style="background:#fff;color:#172033;border:1px solid #64748b;border-radius:9px;padding:10px 16px;cursor:pointer;">Ⅱ Pause / Resume</button>
+        <button id="mr-stop" style="background:#fff;color:#172033;border:1px solid #64748b;border-radius:9px;padding:10px 16px;cursor:pointer;">■ Stop</button>
       </div>
-      <div id="status" aria-live="polite" style="font-size:.82rem;color:#526477;margin-top:9px;">Ready to read the summary aloud.</div>
+      <div id="mr-status" role="status" aria-live="polite" style="font-size:.88rem;color:#334155;margin-top:11px;">Ready. Press Listen to hear all available report information.</div>
     </div>
     <script>
-      const reportText = {speech_json};
-      const speechLanguage = {lang_json};
-      const statusEl = document.getElementById("status");
-      function supported() {{
-        return ("speechSynthesis" in window) && ("SpeechSynthesisUtterance" in window);
-      }}
-      document.getElementById("play").addEventListener("click", () => {{
-        if (!supported()) {{
-          statusEl.textContent = "Speech playback is not supported by this browser. Try a recent version of Chrome or Edge.";
-          return;
+      (() => {{
+        const textToRead = {speech_json};
+        const wantedLang = {lang_json};
+        const languageLabel = {label_json};
+        const status = document.getElementById('mr-status');
+        const play = document.getElementById('mr-play');
+        const pause = document.getElementById('mr-pause');
+        const stop = document.getElementById('mr-stop');
+        let chunks = [];
+        let current = 0;
+        let stopped = false;
+
+        function sayStatus(message) {{ status.textContent = message; }}
+
+        function findVoice() {{
+          const voices = window.speechSynthesis.getVoices() || [];
+          const prefix = wantedLang.slice(0, 2).toLowerCase();
+          return voices.find(v => (v.lang || '').toLowerCase() === wantedLang.toLowerCase())
+            || voices.find(v => (v.lang || '').toLowerCase().startsWith(prefix + '-'))
+            || voices.find(v => (v.lang || '').toLowerCase() === prefix);
         }}
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(reportText);
-        utterance.lang = speechLanguage;
-        utterance.rate = 0.92;
-        utterance.onstart = () => statusEl.textContent = "Reading aloud…";
-        utterance.onend = () => statusEl.textContent = "Finished reading.";
-        utterance.onerror = (event) => statusEl.textContent = "Playback could not start. Check your device's available voices (" + event.error + ").";
-        window.speechSynthesis.speak(utterance);
-      }});
-      document.getElementById("pause").addEventListener("click", () => {{
-        if (supported() && window.speechSynthesis.speaking) {{
-          if (window.speechSynthesis.paused) {{
-            window.speechSynthesis.resume();
-            statusEl.textContent = "Reading aloud…";
-          }} else {{
-            window.speechSynthesis.pause();
-            statusEl.textContent = "Paused.";
+
+        function splitIntoChunks(text, maxLength=1700) {{
+          const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+          const result = [];
+          let chunk = '';
+          sentences.forEach(sentence => {{
+            const next = (chunk + ' ' + sentence).trim();
+            if (next.length > maxLength && chunk) {{
+              result.push(chunk);
+              chunk = sentence.trim();
+            }} else {{
+              chunk = next;
+            }}
+          }});
+          if (chunk) result.push(chunk);
+          return result;
+        }}
+
+        function speakNext() {{
+          if (stopped || current >= chunks.length) {{
+            if (!stopped) sayStatus('Finished reading all available report information.');
+            return;
           }}
+          const utterance = new SpeechSynthesisUtterance(chunks[current]);
+          utterance.lang = wantedLang;
+          utterance.rate = 0.88;
+          utterance.pitch = 1;
+          const voice = findVoice();
+          if (voice) utterance.voice = voice;
+          utterance.onstart = () => sayStatus('Reading section ' + (current + 1) + ' of ' + chunks.length + ' in ' + languageLabel + '…');
+          utterance.onend = () => {{ current += 1; speakNext(); }};
+          utterance.onerror = (event) => sayStatus('Voice playback error: ' + event.error + '. Try Microsoft Edge and check device audio.');
+          window.speechSynthesis.speak(utterance);
         }}
-      }});
-      document.getElementById("stop").addEventListener("click", () => {{
-        if (supported()) window.speechSynthesis.cancel();
-        statusEl.textContent = "Stopped.";
-      }});
+
+        play.addEventListener('click', () => {{
+          if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {{
+            sayStatus('Voice playback is not supported in this browser. Please use Microsoft Edge.');
+            return;
+          }}
+          window.speechSynthesis.cancel();
+          stopped = false;
+          current = 0;
+          chunks = splitIntoChunks(textToRead);
+          if (!findVoice() && wantedLang.slice(0, 2) !== 'en') {{
+            sayStatus('No ' + languageLabel + ' voice is available in this browser. Please use Microsoft Edge, where this voice is available.');
+            return;
+          }}
+          speakNext();
+        }});
+
+        pause.addEventListener('click', () => {{
+          if (!('speechSynthesis' in window)) return;
+          if (window.speechSynthesis.speaking && !window.speechSynthesis.paused) {{
+            window.speechSynthesis.pause();
+            sayStatus('Playback paused. Press Pause / Resume to continue.');
+          }} else if (window.speechSynthesis.paused) {{
+            window.speechSynthesis.resume();
+            sayStatus('Continuing playback…');
+          }} else {{
+            sayStatus('Press Listen to start playback.');
+          }}
+        }});
+
+        stop.addEventListener('click', () => {{
+          stopped = true;
+          if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+          sayStatus('Playback stopped.');
+        }});
+
+        if ('speechSynthesis' in window) window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+      }})();
     </script>
     """
-    components.html(html, height=190, scrolling=False)
+    components.html(html, height=220, scrolling=False)
 
-
-
-def build_context_answer(question, context, report_json=None, comparison_json=None):
-    """Answer from extracted report/comparison data only; do not invent missing values."""
-    q = (question or "").strip().lower()
-    if not q:
-        return "Please enter a question about the selected report."
-    def clean(v):
-        return str(v).strip() if v not in (None, "") else "Not stated in the extracted report."
-    if context == "Comparison" and isinstance(comparison_json, dict):
-        comp = comparison_json
-        rows = [x for x in (comp.get("results_comparison") or []) if isinstance(x, dict)]
-        matched = [x for x in rows if any(token in q for token in re.findall(r"[a-zA-Z][a-zA-Z0-9_-]*", str(x.get("parameter", "")).lower()))]
-        if matched:
-            x = matched[0]
-            return (f"{clean(x.get('parameter'))}: older report {clean(x.get('older_value'))} {clean(x.get('older_unit'))}; "
-                    f"newer report {clean(x.get('newer_value'))} {clean(x.get('newer_unit'))}. "
-                    f"Comparison note: {clean(x.get('change_description'))} "
-                    "Check that units, dates, and test methods match before interpreting this change.")
-        if any(k in q for k in ("summary", "overall", "changed", "difference", "compare", "comparison")):
-            return clean(comp.get("overall_summary"))
-        findings = comp.get("findings_comparison") or []
-        if findings and any(k in q for k in ("finding", "impression", "observation")):
-            return " ".join(f"{clean(x.get('topic'))}. Older: {clean(x.get('older_finding'))}. Newer: {clean(x.get('newer_finding'))}. {clean(x.get('change_description'))}" for x in findings if isinstance(x, dict))
-        return "I couldn't match that question to a specific comparison item. Try asking about a parameter name or the overall comparison summary."
-    if isinstance(report_json, dict):
-        data = report_json
-        labs = [x for x in (data.get("laboratory_results") or []) if isinstance(x, dict)]
-        terms = [x for x in (data.get("terms_explained") or []) if isinstance(x, dict)]
-        for x in labs:
-            name = str(x.get("parameter", "")).lower()
-            if name and name in q:
-                return (f"{clean(x.get('parameter'))}: {clean(x.get('value'))} {clean(x.get('unit'))}. "
-                        f"Reference range: {clean(x.get('reference_range'))}. Status as reported: {clean(x.get('status_as_reported'))}. "
-                        f"Explanation: {clean(x.get('plain_language_explanation'))} Source wording: {clean(x.get('source_quote'))}")
-        for x in terms:
-            name = str(x.get("term", "")).lower()
-            if name and name in q:
-                return f"{clean(x.get('term'))}: {clean(x.get('explanation'))} Source wording: {clean(x.get('source_quote'))}"
-        if any(k in q for k in ("summary", "overall", "explain report", "what does my report say")):
-            return clean(data.get("plain_language_summary"))
-        if any(k in q for k in ("finding", "impression", "observation")):
-            items = data.get("key_findings") or data.get("normal_or_negative_findings") or []
-            texts = [clean(x.get("finding") if isinstance(x, dict) else x) for x in items]
-            return " ".join(texts) if texts else "No clear findings were extracted. Please review the original report text."
-    return "I don't have enough extracted information to answer that from the selected report. Check the extracted text or run the report analysis first."
-
-
-def render_context_voice_assistant():
-    """Single question-and-listen assistant that follows the selected report context."""
-    st.markdown("### 🎙️ Ask the report assistant")
-    st.caption("Answers are based only on information extracted by this app. Missing details are not guessed.")
-    raw_ai = st.session_state.get("medical_report_ai_output", "")
-    raw_compare = st.session_state.get("medical_report_compare_output", "")
-    try:
-        report_data = json.loads(raw_ai) if raw_ai else None
-    except (TypeError, json.JSONDecodeError):
-        report_data = None
-    try:
-        compare_data = json.loads(raw_compare) if raw_compare else None
-    except (TypeError, json.JSONDecodeError):
-        compare_data = None
-    choices = []
-    if report_data:
-        choices.append("Current uploaded report")
-    if compare_data:
-        choices.extend(["Older report", "Newer report", "Comparison"])
-    if not choices:
-        st.info("Analyze a report or compare two reports first. The assistant will then use the available extracted data.")
-        return
-    context = st.selectbox("Which report should I use?", choices, key="context_voice_choice")
-    question = st.text_input("Ask a question", placeholder="Example: What is the hemoglobin value?", key="context_voice_question")
-    if st.button("Ask", key="context_voice_ask"):
-        if context == "Current uploaded report":
-            answer = build_context_answer(question, context, report_json=report_data)
-        elif context == "Comparison":
-            answer = build_context_answer(question, context, comparison_json=compare_data)
-        else:
-            # The comparison result contains both time points. Reuse the exact extracted value fields.
-            rows = [x for x in (compare_data or {}).get("results_comparison", []) if isinstance(x, dict)]
-            label = "older" if context == "Older report" else "newer"
-            if question.strip():
-                q = question.lower()
-                found = next((x for x in rows if str(x.get("parameter", "")).lower() in q), None)
-                if found:
-                    answer = (f"{clean_context_value(found.get('parameter'))}: {clean_context_value(found.get(label + '_value'))} "
-                              f"{clean_context_value(found.get(label + '_unit'))}. Reference range: "
-                              f"{clean_context_value(found.get(label + '_reference_range'))}. Source quote: "
-                              f"{clean_context_value(found.get(label + '_source_quote'))}")
-                else:
-                    answer = "I couldn't match that question to a parameter in this report. Try using the exact parameter name."
-            else:
-                answer = "Please enter a question about this report."
-        st.session_state["context_voice_answer"] = answer
-    answer = st.session_state.get("context_voice_answer", "")
-    if answer:
-        st.markdown("**Answer**")
-        st.write(answer)
-        render_voice_assistant(answer, [], st.session_state.get("medical_report_ai_language", UI_LANGUAGE))
-
-
-def clean_context_value(value):
-    return str(value).strip() if value not in (None, "") else "Not stated in the extracted report."
 
 def render_ai_analysis(raw_output, was_truncated=False):
     """Render parsed JSON in a readable layout; show raw output if JSON parsing fails."""
@@ -950,7 +1057,7 @@ def render_ai_analysis(raw_output, was_truncated=False):
     st.markdown("#### Plain-language summary")
     summary_text = data.get("plain_language_summary") or "No summary returned."
     st.write(summary_text)
-    render_voice_assistant(summary_text, data.get("key_findings") or [], st.session_state.get("medical_report_ai_language", UI_LANGUAGE))
+    render_voice_assistant(data, UI_LANGUAGE)
 
     def render_quoted_items(title, key, field):
         items = data.get(key) or []
@@ -1023,6 +1130,91 @@ def render_ai_analysis(raw_output, was_truncated=False):
 
     return data
 
+
+def render_report_comparison_section():
+    st.subheader("Old vs New Report Comparison")
+    st.caption("Compare an older report with a newer one. The comparison section is shown at the top of the report page.")
+    compare_force_ocr = st.checkbox("Run OCR on every PDF page", value=False, key="compare_force_ocr")
+    with st.expander("Compare two reports (older vs newer)", expanded=True):
+        st.write("Compare report changes using AI. The extracted text from both reports is sent to the configured OpenAI API only after you select consent and click the comparison button.")
+        older_file = st.file_uploader("Older report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="older_compare_upload")
+        newer_file = st.file_uploader("Newer report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="newer_compare_upload")
+        compare_consent = st.checkbox("I consent to send the extracted text of both reports to OpenAI for comparison and am authorized to share them.", key="compare_consent")
+        if st.button("Compare reports with AI", disabled=not (older_file and newer_file and compare_consent and model_name.strip()), key="compare_reports_button"):
+            try:
+                with st.spinner("Extracting and comparing both reports..."):
+                    old_text = extract_uploaded_text(older_file, force_ocr=compare_force_ocr)
+                    new_text = extract_uploaded_text(newer_file, force_ocr=compare_force_ocr)
+                    compare_output, compare_truncated = compare_reports_with_ai(old_text, new_text, model_name.strip(), language_name)
+                st.session_state["medical_report_compare_output"] = compare_output
+                st.session_state["medical_report_compare_truncated"] = compare_truncated
+                st.session_state["medical_report_compare_names"] = (older_file.name, newer_file.name)
+                st.session_state["medical_report_compare_hash"] = hashlib.sha256((old_text + "\0" + new_text).encode("utf-8", errors="replace")).hexdigest()
+                st.session_state["medical_report_compare_old_text"] = old_text
+                st.session_state["medical_report_compare_new_text"] = new_text
+            except Exception as exc:
+                st.error("Report comparison could not be completed.")
+                st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+        compare_output = st.session_state.get("medical_report_compare_output", "")
+        if compare_output:
+            if st.session_state.get("medical_report_compare_truncated"):
+                st.warning("One or both reports were truncated before comparison; later content may be missing.")
+            try:
+                comparison = json.loads(compare_output)
+                st.markdown("#### Comparison summary")
+                st.write(comparison.get("overall_summary", "No summary returned."))
+                result_rows = comparison.get("results_comparison") or []
+                if result_rows:
+                    st.markdown("#### Results compared")
+                    st.dataframe([{
+                        "Parameter": x.get("parameter", ""),
+                        "Older value": str(x.get("older_value", "Not stated")) + (" " + str(x.get("older_unit", "")) if x.get("older_unit") else ""),
+                        "Newer value": str(x.get("newer_value", "Not stated")) + (" " + str(x.get("newer_unit", "")) if x.get("newer_unit") else ""),
+                        "Older reference range": x.get("older_reference_range", "Not stated"),
+                        "Newer reference range": x.get("newer_reference_range", "Not stated"),
+                        "Change described by AI": x.get("change_description", ""),
+                        "Older source quote": x.get("older_source_quote", ""),
+                        "Newer source quote": x.get("newer_source_quote", ""),
+                    } for x in result_rows if isinstance(x, dict)], use_container_width=True, hide_index=True)
+                    chart_rows = []
+                    for x in result_rows:
+                        if not isinstance(x, dict):
+                            continue
+                        vals=[]
+                        for key in ("older_value", "newer_value"):
+                            m=re.search(r"[-+]?\d[\d,]*(?:\.\d+)?", str(x.get(key, "")))
+                            vals.append(float(m.group(0).replace(",", "")) if m else None)
+                        if vals[0] is not None and vals[1] is not None and x.get("parameter"):
+                            chart_rows.append({"Parameter": str(x["parameter"]), "Older report": vals[0], "Newer report": vals[1]})
+                    if chart_rows:
+                        st.markdown("#### Numeric change overview (units may differ; verify before interpreting)")
+                        import pandas as pd
+                        chart_data = pd.DataFrame(
+                            {row["Parameter"]: [row["Older report"], row["Newer report"]] for row in chart_rows},
+                            index=["Older report", "Newer report"],
+                        )
+                        st.line_chart(chart_data)
+                        st.caption("The chart compares numeric values only. Confirm that both tests use matching units and methods before interpreting changes.")
+                finding_rows = comparison.get("findings_comparison") or []
+                if finding_rows:
+                    st.markdown("#### Narrative findings compared")
+                    for item in finding_rows:
+                        if isinstance(item, dict):
+                            st.markdown(f"**{item.get('topic', 'Finding')}**")
+                            st.write("Older: " + str(item.get("older_finding", "Not stated")))
+                            st.caption("Older source: “" + str(item.get("older_source_quote", "")) + "”")
+                            st.write("Newer: " + str(item.get("newer_finding", "Not stated")))
+                            st.caption("Newer source: “" + str(item.get("newer_source_quote", "")) + "”")
+                            st.write(item.get("change_description", ""))
+                if comparison.get("limitations"):
+                    st.markdown("#### Limitations")
+                    for item in comparison["limitations"]:
+                        st.write("• " + str(item))
+                st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
+            except (json.JSONDecodeError, TypeError):
+                st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
+                st.text(compare_output)
+
 with st.sidebar:
     st.header("Report reading")
     st.markdown(
@@ -1042,286 +1234,220 @@ with st.sidebar:
     st.caption("AI explanations use the selected app language. Medical values, units, abbreviations, and exact source quotes are preserved.")
     st.markdown("[API pricing](https://developers.openai.com/api/docs/pricing) · [API quickstart](https://developers.openai.com/api/reference/python)")
 
-force_ocr = st.checkbox(
-    "Run OCR on every PDF page even if text is available (slower; useful for mixed or poor-quality PDFs)",
-    value=False,
-)
-uploaded = st.file_uploader("Upload a medical report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"])
 
-
-with st.expander("Compare two reports (older vs newer)", expanded=False):
-    st.write("Compare report changes using AI. The extracted text from both reports is sent to the configured OpenAI API only after you select consent and click the comparison button.")
-    older_file = st.file_uploader("Older report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="older_compare_upload")
-    newer_file = st.file_uploader("Newer report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"], key="newer_compare_upload")
-    compare_consent = st.checkbox("I consent to send the extracted text of both reports to OpenAI for comparison and am authorized to share them.", key="compare_consent")
-    if st.button("Compare reports with AI", disabled=not (older_file and newer_file and compare_consent and model_name.strip()), key="compare_reports_button"):
-        try:
-            with st.spinner("Extracting and comparing both reports..."):
-                old_text = extract_uploaded_text(older_file, force_ocr=force_ocr)
-                new_text = extract_uploaded_text(newer_file, force_ocr=force_ocr)
-                compare_output, compare_truncated = compare_reports_with_ai(old_text, new_text, model_name.strip(), language_name)
-            st.session_state["medical_report_compare_output"] = compare_output
-            st.session_state["medical_report_compare_truncated"] = compare_truncated
-            st.session_state["medical_report_compare_names"] = (older_file.name, newer_file.name)
-            st.session_state["medical_report_compare_hash"] = hashlib.sha256((old_text + "\0" + new_text).encode("utf-8", errors="replace")).hexdigest()
-            st.session_state["medical_report_compare_old_text"] = old_text
-            st.session_state["medical_report_compare_new_text"] = new_text
-        except Exception as exc:
-            st.error("Report comparison could not be completed.")
-            st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-    compare_output = st.session_state.get("medical_report_compare_output", "")
-    if compare_output:
-        if st.session_state.get("medical_report_compare_truncated"):
-            st.warning("One or both reports were truncated before comparison; later content may be missing.")
-        try:
-            comparison = json.loads(compare_output)
-            st.markdown("#### Comparison summary")
-            st.write(comparison.get("overall_summary", "No summary returned."))
-            result_rows = comparison.get("results_comparison") or []
-            if result_rows:
-                st.markdown("#### Results compared")
-                st.dataframe([{
-                    "Parameter": x.get("parameter", ""),
-                    "Older value": str(x.get("older_value", "Not stated")) + (" " + str(x.get("older_unit", "")) if x.get("older_unit") else ""),
-                    "Newer value": str(x.get("newer_value", "Not stated")) + (" " + str(x.get("newer_unit", "")) if x.get("newer_unit") else ""),
-                    "Older reference range": x.get("older_reference_range", "Not stated"),
-                    "Newer reference range": x.get("newer_reference_range", "Not stated"),
-                    "Change described by AI": x.get("change_description", ""),
-                    "Older source quote": x.get("older_source_quote", ""),
-                    "Newer source quote": x.get("newer_source_quote", ""),
-                } for x in result_rows if isinstance(x, dict)], use_container_width=True, hide_index=True)
-                chart_rows = []
-                for x in result_rows:
-                    if not isinstance(x, dict):
-                        continue
-                    vals=[]
-                    for key in ("older_value", "newer_value"):
-                        m=re.search(r"[-+]?\d[\d,]*(?:\.\d+)?", str(x.get(key, "")))
-                        vals.append(float(m.group(0).replace(",", "")) if m else None)
-                    if vals[0] is not None and vals[1] is not None and x.get("parameter"):
-                        chart_rows.append({"Parameter": str(x["parameter"]), "Older report": vals[0], "Newer report": vals[1]})
-                if chart_rows:
-                    st.markdown("#### Numeric change overview (units may differ; verify before interpreting)")
-                    import pandas as pd
-                    chart_data = pd.DataFrame(
-                        {row["Parameter"]: [row["Older report"], row["Newer report"]] for row in chart_rows},
-                        index=["Older report", "Newer report"],
-                    )
-                    st.line_chart(chart_data)
-                    st.caption("The chart compares numeric values only. Confirm that both tests use matching units and methods before interpreting changes.")
-            finding_rows = comparison.get("findings_comparison") or []
-            if finding_rows:
-                st.markdown("#### Narrative findings compared")
-                for item in finding_rows:
-                    if isinstance(item, dict):
-                        st.markdown(f"**{item.get('topic', 'Finding')}**")
-                        st.write("Older: " + str(item.get("older_finding", "Not stated")))
-                        st.caption("Older source: “" + str(item.get("older_source_quote", "")) + "”")
-                        st.write("Newer: " + str(item.get("newer_finding", "Not stated")))
-                        st.caption("Newer source: “" + str(item.get("newer_source_quote", "")) + "”")
-                        st.write(item.get("change_description", ""))
-            if comparison.get("limitations"):
-                st.markdown("#### Limitations")
-                for item in comparison["limitations"]:
-                    st.write("• " + str(item))
-            st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
-        except (json.JSONDecodeError, TypeError):
-            st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
-            st.text(compare_output)
-
-if uploaded:
-    raw = uploaded.getvalue()
-    suffix = Path(uploaded.name).suffix.lower()
-    try:
-        with st.spinner("Reading report..."):
-            if suffix == ".pdf":
-                report_text = extract_pdf_text(raw)
-                if force_ocr or len(re.sub(r"\s+", "", report_text)) < 100:
-                    try:
-                        ocr_text = extract_ocr_pdf(raw)
-                        if ocr_text and (force_ocr or len(ocr_text) > len(report_text)):
-                            report_text = ocr_text
-                            st.success("Text extracted using OCR (scanned-page recognition).")
-                    except Exception as exc:
-                        if not report_text:
-                            st.error("This PDF appears to be scanned or image-only, and OCR could not run.")
-                            st.caption(str(exc))
-                            st.stop()
-                        st.warning("OCR could not run, so the app is using the PDF's selectable text instead.")
-                        st.caption(str(exc))
-            else:
-                report_text = extract_image_text(raw)
-                st.success("Text extracted from the image using OCR.")
-    except Exception as exc:
-        st.error("Could not read this file.")
-        st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-        st.stop()
-
-    if not report_text.strip():
-        st.error("No readable text was extracted. Try a clearer scan or another file.")
-        st.stop()
-
-    report_types = classify_report(report_text)
-    st.success("Text extracted.")
-    st.subheader("Detected report category (rule-based)")
-    st.write(" · ".join(report_types))
-    st.caption("This category is a keyword-based guess and may be incomplete or wrong.")
-    with st.expander("View extracted text (review for OCR errors)"):
-        st.text_area("Extracted text", report_text, height=260)
-
-    report_fingerprint = hashlib.sha256(report_text.encode("utf-8", errors="replace")).hexdigest()
-    st.subheader("AI-powered report explanation")
-    st.write("AI can summarize a wider variety of written reports than the built-in rules. It may still omit or misread information.")
-    consent = st.checkbox(
-        "I understand that the extracted report text may contain sensitive health information and will be sent to OpenAI's API for analysis. I have permission to share it.",
-        value=False,
-        key="ai_report_consent",
-    )
-    if st.button("Analyze report with AI", type="primary", disabled=not consent or not model_name.strip()):
-        try:
-            with st.spinner("Analyzing report text with AI..."):
-                ai_text, truncated = analyze_report_with_ai(report_text, model_name.strip(), language_name)
-            st.session_state["medical_report_ai_output"] = ai_text
-            st.session_state["medical_report_ai_truncated"] = truncated
-            st.session_state["medical_report_ai_source_name"] = uploaded.name
-            st.session_state["medical_report_ai_source_hash"] = report_fingerprint
-            st.session_state["medical_report_ai_language"] = language_name
-        except Exception as exc:
-            st.error("AI analysis could not be completed.")
-            st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
-    if (st.session_state.get("medical_report_ai_output")
-            and st.session_state.get("medical_report_ai_source_name") == uploaded.name
-            and st.session_state.get("medical_report_ai_source_hash") == report_fingerprint
-            and st.session_state.get("medical_report_ai_language") == language_name):
-        with st.container(border=True):
-            render_ai_analysis(
-                st.session_state["medical_report_ai_output"],
-                st.session_state.get("medical_report_ai_truncated", False),
-            )
-            st.download_button(
-                "Download professional PDF summary",
-                data=create_pdf_summary(uploaded.name, report_text, st.session_state["medical_report_ai_output"], language_name),
-                file_name="medical_report_summary.pdf",
-                mime="application/pdf",
-            )
-            if st.button("Save this analysis to local history", key="save_current_history"):
-                try:
-                    save_history(uploaded.name, language_name, report_text, st.session_state["medical_report_ai_output"])
-                    st.success("Saved locally on this computer.")
-                except Exception as exc:
-                    st.error(f"Could not save history: {type(exc).__name__}: {exc}")
-        st.download_button(
-            "Download AI analysis (JSON)",
-            data=st.session_state["medical_report_ai_output"],
-            file_name="medical_report_ai_analysis.json",
-            mime="application/json",
-        )
-
+if selected_page == "Home":
+    st.title("Welcome to your Medical Report Assistant")
+    st.write("Upload a medical report, review extracted text, understand the AI explanation, or compare reports over time.")
+    st.markdown("### Choose where to begin")
+    st.markdown("- **Upload & OCR:** Read a PDF or scanned report and review extracted text and analysis.\n- **Old vs New Comparison:** Compare two reports over time.\n- **Report History:** View or delete analyses saved on this computer.")
+    st.info("Educational support only. This app does not diagnose or prescribe treatment. Verify all extracted information against the original report.")
+elif selected_page == "Upload & OCR":
+    st.title("Upload & OCR")
+    st.caption("Upload a medical report, extract its text, and review the AI explanation.")
     st.divider()
-    st.subheader("Rule-based laboratory extraction (comparison aid)")
-    lab_rows = detect_lab_results(report_text)
-    if lab_rows:
-        rule_flagged = [row for row in lab_rows if row.get("Status") in {"Below stated range", "Above stated range"}]
-        if rule_flagged:
-            st.warning("Potential out-of-range values detected by the rule-based parser: " + "; ".join(f"{row.get('Parameter')} ({row.get('Status')})" for row in rule_flagged) + ". Check the original report carefully.")
-        st.dataframe(lab_rows, use_container_width=True, hide_index=True)
-        st.download_button(
-            "Download recognized lab values (CSV)",
-            data=csv_bytes(lab_rows),
-            file_name="medical_report_results.csv",
-            mime="text/csv",
+    force_ocr = st.checkbox(
+        "Run OCR on every PDF page even if text is available (slower; useful for mixed or poor-quality PDFs)",
+        value=False,
+    )
+    uploaded = st.file_uploader("Upload a medical report", type=["pdf", "png", "jpg", "jpeg", "tif", "tiff", "bmp"])
+
+    if uploaded:
+        raw = uploaded.getvalue()
+        suffix = Path(uploaded.name).suffix.lower()
+        try:
+            with st.spinner("Reading report..."):
+                if suffix == ".pdf":
+                    report_text = extract_pdf_text(raw)
+                    if force_ocr or len(re.sub(r"\s+", "", report_text)) < 100:
+                        try:
+                            ocr_text = extract_ocr_pdf(raw)
+                            if ocr_text and (force_ocr or len(ocr_text) > len(report_text)):
+                                report_text = ocr_text
+                                st.success("Text extracted using OCR (scanned-page recognition).")
+                        except Exception as exc:
+                            if not report_text:
+                                st.error("This PDF appears to be scanned or image-only, and OCR could not run.")
+                                st.caption(str(exc))
+                                st.stop()
+                            st.warning("OCR could not run, so the app is using the PDF's selectable text instead.")
+                            st.caption(str(exc))
+                else:
+                    report_text = extract_image_text(raw)
+                    st.success("Text extracted from the image using OCR.")
+        except Exception as exc:
+            st.error("Could not read this file.")
+            st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+            st.stop()
+
+        if not report_text.strip():
+            st.error("No readable text was extracted. Try a clearer scan or another file.")
+            st.stop()
+
+        report_types = classify_report(report_text)
+        st.success("Text extracted.")
+        st.subheader("Detected report category (rule-based)")
+        st.write(" · ".join(report_types))
+        st.caption("This category is a keyword-based guess and may be incomplete or wrong.")
+        with st.expander("View extracted text (review for OCR errors)"):
+            st.text_area("Extracted text", report_text, height=260)
+
+        report_fingerprint = hashlib.sha256(report_text.encode("utf-8", errors="replace")).hexdigest()
+        st.subheader("AI-powered report explanation")
+        st.write("AI can summarize a wider variety of written reports than the built-in rules. It may still omit or misread information.")
+        consent = st.checkbox(
+            "I understand that the extracted report text may contain sensitive health information and will be sent to OpenAI's API for analysis. I have permission to share it.",
+            value=False,
+            key="ai_report_consent",
         )
-        st.caption("This parser supports a limited list of common test names. Value/range pairing can be wrong; verify every row against the source.")
-    else:
-        st.info("The built-in parser did not confidently identify any supported lab values. The AI section may still extract additional report content.")
+        if st.button("Analyze report with AI", type="primary", disabled=not consent or not model_name.strip()):
+            try:
+                with st.spinner("Analyzing report text with AI..."):
+                    ai_text, truncated = analyze_report_with_ai(report_text, model_name.strip(), language_name)
+                st.session_state["medical_report_ai_output"] = ai_text
+                st.session_state["medical_report_ai_truncated"] = truncated
+                st.session_state["medical_report_ai_source_name"] = uploaded.name
+                st.session_state["medical_report_ai_source_hash"] = report_fingerprint
+                st.session_state["medical_report_ai_language"] = language_name
+            except Exception as exc:
+                st.error("AI analysis could not be completed.")
+                st.caption(f"Technical detail: {type(exc).__name__}: {exc}")
+        if (st.session_state.get("medical_report_ai_output")
+                and st.session_state.get("medical_report_ai_source_name") == uploaded.name
+                and st.session_state.get("medical_report_ai_source_hash") == report_fingerprint
+                and st.session_state.get("medical_report_ai_language") == language_name):
+            with st.container(border=True):
+                render_ai_analysis(
+                    st.session_state["medical_report_ai_output"],
+                    st.session_state.get("medical_report_ai_truncated", False),
+                )
+                st.download_button(
+                    "Download professional PDF summary",
+                    data=create_pdf_summary(uploaded.name, report_text, st.session_state["medical_report_ai_output"], language_name),
+                    file_name="medical_report_summary.pdf",
+                    mime="application/pdf",
+                )
+                if st.button("Save this analysis to local history", key="save_current_history"):
+                    try:
+                        save_history(uploaded.name, language_name, report_text, st.session_state["medical_report_ai_output"])
+                        st.success("Saved locally on this computer.")
+                    except Exception as exc:
+                        st.error(f"Could not save history: {type(exc).__name__}: {exc}")
+            st.download_button(
+                "Download AI analysis (JSON)",
+                data=st.session_state["medical_report_ai_output"],
+                file_name="medical_report_ai_analysis.json",
+                mime="application/json",
+            )
 
-    st.subheader("Rule-based report sections (fallback)")
-    findings_raw = extract_section(report_text, ["Findings", "Observations"])
-    impression_raw = extract_section(report_text, ["Impression", "Conclusion", "Conclusions", "Opinion", "Interpretation", "Diagnosis"])
-    recommendations_raw = extract_section(report_text, ["Recommendation", "Recommendations", "Advice", "Suggestion", "Plan"])
-    key_findings, normal_observations, recommendations = split_radiology_narrative(findings_raw, impression_raw, recommendations_raw)
-
-    st.markdown("**Findings detected by rules**")
-    if key_findings:
-        for item in key_findings:
-            st.write("• " + item)
-    elif findings_raw or impression_raw:
-        st.info("No separate main finding could be confidently separated from the extracted wording. Review the source text.")
-    else:
-        st.caption("No clear Findings or Impression heading detected.")
-
-    st.markdown("**Normal / negative observations detected by rules**")
-    if normal_observations:
-        for item in normal_observations:
-            st.write("• " + item)
-    else:
-        st.caption("No clearly worded normal or negative observations were separated.")
-
-    st.markdown("**Recommendations detected by rules**")
-    if recommendations:
-        for item in recommendations:
-            st.write("• " + item)
-    else:
-        st.caption("No separate recommendation was confidently detected.")
-
-    explainers = explain_radiology(" ".join([findings_raw, impression_raw, recommendations_raw, *key_findings, *normal_observations, *recommendations]))
-    if explainers:
-        st.markdown("**Built-in term explanations**")
-        for note in explainers:
-            st.write("• " + note)
-
-    st.warning(
-        "For understanding only—not a diagnosis or treatment plan. This app analyzes the written report text, not the actual pixels of an X-ray, CT, or MRI. "
-        "Do not delay urgent care because of an app summary. If the report says critical/urgent or you have severe or rapidly worsening symptoms, contact a qualified healthcare professional or local emergency service."
-    )
-else:
-    st.markdown(
-        "### How to use\n"
-        "1. Upload a PDF or a scan/photo of a report.\n"
-        "2. The app extracts selectable PDF text or uses OCR for scans.\n"
-        "3. Review the extracted text for mistakes.\n"
-        "4. For AI analysis, check the privacy consent box and click **Analyze report with AI**.\n"
-        "5. Compare AI-extracted values and quotes with the original report before relying on them.\n\n"
-        "### Setup and limitations\n"
-        "- AI analysis requires an OpenAI API key and internet access; API usage is billed separately from a ChatGPT subscription.\n"
-        "- OCR for scanned files requires the Tesseract application and the Python packages `pytesseract` and `Pillow`.\n"
-        "- The built-in laboratory parser supports a limited set of test names; AI extraction is broader but not guaranteed complete or correct.\n"
-        "- The app reads the written report, not medical image pixels, and does not diagnose or recommend treatment.\n"
-        "- Avoid uploading reports unless you are comfortable sending extracted text to the configured AI provider."
-    )
-
-
-st.divider()
-render_context_voice_assistant()
-st.divider()
-with st.expander("Local report history (stored on this computer)", expanded=False):
-    st.warning("History contains sensitive report text and AI output. It is stored in a local SQLite file next to this app. Use only on a trusted computer; delete records when no longer needed.")
-    try:
-        history_rows = read_history()
-        if not history_rows:
-            st.info("No saved analyses yet. Analyze a report, then click 'Save this analysis to local history'.")
+        st.divider()
+        st.subheader("Rule-based laboratory extraction (comparison aid)")
+        lab_rows = detect_lab_results(report_text)
+        if lab_rows:
+            rule_flagged = [row for row in lab_rows if row.get("Status") in {"Below stated range", "Above stated range"}]
+            if rule_flagged:
+                st.warning("Potential out-of-range values detected by the rule-based parser: " + "; ".join(f"{row.get('Parameter')} ({row.get('Status')})" for row in rule_flagged) + ". Check the original report carefully.")
+            st.dataframe(lab_rows, use_container_width=True, hide_index=True)
+            st.download_button(
+                "Download recognized lab values (CSV)",
+                data=csv_bytes(lab_rows),
+                file_name="medical_report_results.csv",
+                mime="text/csv",
+            )
+            st.caption("This parser supports a limited list of common test names. Value/range pairing can be wrong; verify every row against the source.")
         else:
-            options = {f"#{r[0]} · {r[1]} · {r[2]} · {r[3]}": r[0] for r in history_rows}
-            selected_label = st.selectbox("Saved analysis", list(options.keys()), key="history_record_select")
-            record = get_history_record(options[selected_label])
-            if record:
-                st.markdown(f"**File:** {record[2]}  ·  **Saved:** {record[1]}  ·  **Language:** {record[3]}")
-                try:
-                    saved_json = json.loads(record[5])
-                    st.write(saved_json.get("plain_language_summary", "No summary stored."))
-                    saved_labs = saved_json.get("laboratory_results") or []
-                    if saved_labs:
-                        st.dataframe([{
-                            "Parameter": x.get("parameter", ""), "Value": x.get("value", ""), "Unit": x.get("unit", ""),
-                            "Reference range": x.get("reference_range", ""), "Status as reported": x.get("status_as_reported", ""),
-                            "Range-based check": classify_numeric_range(x.get("value", ""), x.get("reference_range", ""))
-                        } for x in saved_labs if isinstance(x, dict)], use_container_width=True, hide_index=True)
-                except Exception:
-                    st.text(record[5])
-                st.download_button("Download saved AI analysis (JSON)", data=record[5], file_name=f"saved_analysis_{record[0]}.json", mime="application/json", key=f"history_download_{record[0]}")
-                if st.button("Delete this saved record", key=f"history_delete_{record[0]}"):
-                    delete_history_record(record[0])
-                    st.success("Saved record deleted.")
-                    st.rerun()
-    except Exception as exc:
-        st.error(f"Could not read local history: {type(exc).__name__}: {exc}")
+            st.info("The built-in parser did not confidently identify any supported lab values. The AI section may still extract additional report content.")
+
+        st.subheader("Rule-based report sections (fallback)")
+        findings_raw = extract_section(report_text, ["Findings", "Observations"])
+        impression_raw = extract_section(report_text, ["Impression", "Conclusion", "Conclusions", "Opinion", "Interpretation", "Diagnosis"])
+        recommendations_raw = extract_section(report_text, ["Recommendation", "Recommendations", "Advice", "Suggestion", "Plan"])
+        key_findings, normal_observations, recommendations = split_radiology_narrative(findings_raw, impression_raw, recommendations_raw)
+
+        st.markdown("**Findings detected by rules**")
+        if key_findings:
+            for item in key_findings:
+                st.write("• " + item)
+        elif findings_raw or impression_raw:
+            st.info("No separate main finding could be confidently separated from the extracted wording. Review the source text.")
+        else:
+            st.caption("No clear Findings or Impression heading detected.")
+
+        st.markdown("**Normal / negative observations detected by rules**")
+        if normal_observations:
+            for item in normal_observations:
+                st.write("• " + item)
+        else:
+            st.caption("No clearly worded normal or negative observations were separated.")
+
+        st.markdown("**Recommendations detected by rules**")
+        if recommendations:
+            for item in recommendations:
+                st.write("• " + item)
+        else:
+            st.caption("No separate recommendation was confidently detected.")
+
+        explainers = explain_radiology(" ".join([findings_raw, impression_raw, recommendations_raw, *key_findings, *normal_observations, *recommendations]))
+        if explainers:
+            st.markdown("**Built-in term explanations**")
+            for note in explainers:
+                st.write("• " + note)
+
+        st.warning(
+            "For understanding only—not a diagnosis or treatment plan. This app analyzes the written report text, not the actual pixels of an X-ray, CT, or MRI. "
+            "Do not delay urgent care because of an app summary. If the report says critical/urgent or you have severe or rapidly worsening symptoms, contact a qualified healthcare professional or local emergency service."
+        )
+    else:
+        st.markdown(
+            "### How to use\n"
+            "1. Upload a PDF or a scan/photo of a report.\n"
+            "2. The app extracts selectable PDF text or uses OCR for scans.\n"
+            "3. Review the extracted text for mistakes.\n"
+            "4. For AI analysis, check the privacy consent box and click **Analyze report with AI**.\n"
+            "5. Compare AI-extracted values and quotes with the original report before relying on them.\n\n"
+            "### Setup and limitations\n"
+            "- AI analysis requires an OpenAI API key and internet access; API usage is billed separately from a ChatGPT subscription.\n"
+            "- OCR for scanned files requires the Tesseract application and the Python packages `pytesseract` and `Pillow`.\n"
+            "- The built-in laboratory parser supports a limited set of test names; AI extraction is broader but not guaranteed complete or correct.\n"
+            "- The app reads the written report, not medical image pixels, and does not diagnose or recommend treatment.\n"
+            "- Avoid uploading reports unless you are comfortable sending extracted text to the configured AI provider."
+        )
+
+
+elif selected_page == "Old vs New Comparison":
+    st.title("Old vs New Report Comparison")
+    st.caption("Compare an older medical report with a newer one.")
+    render_report_comparison_section()
+elif selected_page == "Report History":
+    st.title("Report History")
+    st.caption("Saved analyses are stored locally on this computer.")
+    with st.expander("Local report history (stored on this computer)", expanded=False):
+        st.warning("History contains sensitive report text and AI output. It is stored in a local SQLite file next to this app. Use only on a trusted computer; delete records when no longer needed.")
+        try:
+            history_rows = read_history()
+            if not history_rows:
+                st.info("No saved analyses yet. Analyze a report, then click 'Save this analysis to local history'.")
+            else:
+                options = {f"#{r[0]} · {r[1]} · {r[2]} · {r[3]}": r[0] for r in history_rows}
+                selected_label = st.selectbox("Saved analysis", list(options.keys()), key="history_record_select")
+                record = get_history_record(options[selected_label])
+                if record:
+                    st.markdown(f"**File:** {record[2]}  ·  **Saved:** {record[1]}  ·  **Language:** {record[3]}")
+                    try:
+                        saved_json = json.loads(record[5])
+                        st.write(saved_json.get("plain_language_summary", "No summary stored."))
+                        saved_labs = saved_json.get("laboratory_results") or []
+                        if saved_labs:
+                            st.dataframe([{
+                                "Parameter": x.get("parameter", ""), "Value": x.get("value", ""), "Unit": x.get("unit", ""),
+                                "Reference range": x.get("reference_range", ""), "Status as reported": x.get("status_as_reported", ""),
+                                "Range-based check": classify_numeric_range(x.get("value", ""), x.get("reference_range", ""))
+                            } for x in saved_labs if isinstance(x, dict)], use_container_width=True, hide_index=True)
+                    except Exception:
+                        st.text(record[5])
+                    st.download_button("Download saved AI analysis (JSON)", data=record[5], file_name=f"saved_analysis_{record[0]}.json", mime="application/json", key=f"history_download_{record[0]}")
+                    if st.button("Delete this saved record", key=f"history_delete_{record[0]}"):
+                        delete_history_record(record[0])
+                        st.success("Saved record deleted.")
+                        st.rerun()
+        except Exception as exc:
+            st.error(f"Could not read local history: {type(exc).__name__}: {exc}")
