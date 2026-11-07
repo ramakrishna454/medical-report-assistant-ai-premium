@@ -1131,6 +1131,72 @@ def render_ai_analysis(raw_output, was_truncated=False):
     return data
 
 
+def render_comparison_voice_assistant(comparison, language="English"):
+    """Read the older/newer comparison summary, values, and narrative changes aloud."""
+    if not isinstance(comparison, dict):
+        comparison = {}
+
+    speech_data = {
+        "report_type": "Older and newer medical report comparison",
+        "plain_language_summary": comparison.get("overall_summary", ""),
+        "key_findings": [],
+        "laboratory_results": [],
+        "normal_or_negative_findings": [],
+        "recommendations_written_in_report": [],
+        "terms_explained": [],
+        "questions_to_ask_clinician": [],
+        "uncertainties_or_missing_context": comparison.get("limitations") or [],
+        "urgent_language_in_report": [],
+    }
+
+    for item in comparison.get("results_comparison") or []:
+        if not isinstance(item, dict):
+            continue
+        parameter = str(item.get("parameter", "") or "Result").strip()
+        older = " ".join(str(item.get(k, "") or "").strip() for k in ("older_value", "older_unit")).strip()
+        newer = " ".join(str(item.get(k, "") or "").strip() for k in ("newer_value", "newer_unit")).strip()
+        description = (
+            f"{parameter}. Older report: {older or 'Not stated'}. "
+            f"Newer report: {newer or 'Not stated'}. "
+            f"{str(item.get('change_description', '') or '').strip()}"
+        ).strip()
+        quotes = " ".join(
+            q for q in (
+                str(item.get("older_source_quote", "") or "").strip(),
+                str(item.get("newer_source_quote", "") or "").strip(),
+            ) if q
+        )
+        speech_data["key_findings"].append({
+            "finding": description,
+            "source_quote": quotes,
+        })
+
+    for item in comparison.get("findings_comparison") or []:
+        if not isinstance(item, dict):
+            continue
+        topic = str(item.get("topic", "") or "Finding").strip()
+        older = str(item.get("older_finding", "") or "Not stated").strip()
+        newer = str(item.get("newer_finding", "") or "Not stated").strip()
+        change = str(item.get("change_description", "") or "").strip()
+        description = (
+            f"{topic}. Older report: {older}. Newer report: {newer}. {change}"
+        ).strip()
+        quotes = " ".join(
+            q for q in (
+                str(item.get("older_source_quote", "") or "").strip(),
+                str(item.get("newer_source_quote", "") or "").strip(),
+            ) if q
+        )
+        speech_data["normal_or_negative_findings"].append({
+            "finding": description,
+            "source_quote": quotes,
+        })
+
+    st.markdown("#### 🔊 Voice Assistant — Listen to Older vs Newer Comparison")
+    st.caption("Listen to the comparison summary, extracted value changes, narrative findings, and limitations.")
+    render_voice_assistant(speech_data, language=language)
+
+
 def render_report_comparison_section():
     st.subheader("Old vs New Report Comparison")
     st.caption("Compare an older report with a newer one. The comparison section is shown at the top of the report page.")
@@ -1211,6 +1277,7 @@ def render_report_comparison_section():
                     for item in comparison["limitations"]:
                         st.write("• " + str(item))
                 st.download_button("Download comparison (JSON)", data=compare_output, file_name="medical_report_comparison.json", mime="application/json")
+                render_comparison_voice_assistant(comparison, language=language_name)
             except (json.JSONDecodeError, TypeError):
                 st.warning("The model returned a non-JSON comparison. Raw output is shown below.")
                 st.text(compare_output)
